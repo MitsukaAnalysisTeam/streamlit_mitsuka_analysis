@@ -6,3 +6,4 @@ japanize-matplotlib==1.1.3
 jpholiday
 python-dateutil
 setuptools  # 依存関係の解決
+packaging
