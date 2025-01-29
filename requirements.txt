@@ -1,6 +1,7 @@
 streamlit
 pandas
+numpy
 matplotlib
+japanize-matplotlib
 jpholiday
-japanize_matplotlib
-plotly
+python-dateutil
