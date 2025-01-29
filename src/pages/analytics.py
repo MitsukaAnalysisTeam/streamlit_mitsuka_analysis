@@ -8,6 +8,8 @@ import src.components.utils as utils
 
 def show():
     daily_report_analysis()
+    monthly_report_analysis()
+    weekly_report_analysis()
 
 def daily_report_analysis():
     '''
@@ -16,7 +18,7 @@ def daily_report_analysis():
     # インスタンス化
     dailyReportAnalysisUtils = utils.DailyReportAnalysisUtils()
     dailyReportAnalysisCharts = charts.DailyReportAnalysisCharts()
-    st.header("Analytics Page")
+
     # バーでファイルを選択
     month_list = utils.get_month_list()
     selected_month = st.selectbox("日報ファイルを選択", month_list[::-1])
@@ -39,6 +41,18 @@ def daily_report_analysis():
     except Exception as e:
         st.error(f"エラーが発生しました: {e}")
 
+
+def hourly_report_analysis():
+    '''
+    時間別分析のグラフ
+    '''
+    st.title("開発中...🐭")
+
+    
+def monthly_report_analysis():
+    # インスタンス化
+    dailyReportAnalysisUtils = utils.DailyReportAnalysisUtils()
+    dailyReportAnalysisCharts = charts.DailyReportAnalysisCharts()
     '''
     月毎のグラフ表示
     '''
@@ -51,4 +65,42 @@ def daily_report_analysis():
     dailyReportAnalysisCharts.monthly_transfer_mean_bar(df_dic=df_dic,
                                                    str1=option_monthly_mean)
     
+def weekly_report_analysis():
+    '''
+    曜日別のグラフ表示
+    '''
+    month_list = utils.get_month_list()
+    # インスタンス化
+    dailyReportAnalysisUtils = utils.DailyReportAnalysisUtils()
+    dailyReportAnalysisCharts = charts.DailyReportAnalysisCharts()
 
+    df_dic = dailyReportAnalysisUtils.get_all_daily_report_dic()
+    left_selected_month_for_weekly = st.selectbox("グラフの左側にくる年月", month_list[:-1][::-1])
+    right_selected_month_for_weekly = st.selectbox("グラフの右側にくる年月", month_list[::-1])
+    option_weekly_mean = st.selectbox("表示", df_dic["2022"]["10"].columns.tolist()[1::])
+    df_weekly_dic = dailyReportAnalysisUtils.get_all_weekly_report_dic()
+    dailyReportAnalysisCharts.weekly_comparison_bar(df_weekly_dic[left_selected_month_for_weekly[:4]][left_selected_month_for_weekly[5:]],
+                                                    df_weekly_dic[right_selected_month_for_weekly[:4]][right_selected_month_for_weekly[5:]],
+                                                    option_weekly_mean,
+                                                    left_selected_month_for_weekly,
+                                                    right_selected_month_for_weekly
+                                                    )
+    
+
+def night_ramen_analysis():
+    '''
+    夜ラーメン分析のグラフ
+    '''
+    st.title("開発中...🐭")
+
+def lunch_ramen_analysis():
+    '''
+    ランチラーメン分析のグラフ
+    '''
+    st.title("開発中...🐭")
+
+def alchohol_analysis():
+    '''
+    アルコール分析のグラフ
+    '''
+    st.title("開発中...🐭")

@@ -13,7 +13,9 @@ japanize_matplotlib.japanize()
 データの処理を行うファイル。
 '''
 class DailyReportAnalysisUtils:
-
+    '''
+    日報データ用のメソッド追加クラス
+    '''
     def convert_daily_report_data(
             self,
             df: pd.DataFrame
@@ -132,9 +134,27 @@ class DailyReportAnalysisUtils:
         # print(df_dic)
         return df_dic
 
+    def get_all_weekly_report_dic(self):
+        df_weekday_dic = {}
+        # データをセット
+        df_dic = self.get_all_daily_report_dic()
 
-
-
+        # すべてのDataFrameに `convert_daily_report_data` を適用
+        for year, months in df_dic.items():
+            if year not in df_weekday_dic:
+                df_weekday_dic[year] = {}  # 年ごとに辞書を作成
+            for month, df in months.items():
+                try:
+                    # 月ごとの辞書を作成
+                    df_weekday_dic[year][month] = (
+                        df.groupby('曜日').mean()
+                        .reindex(index=['水', '木', '金', '土', '日', '祝日'])
+                        .fillna(0)
+                    )
+                except Exception as e:
+                    print(f"エラーが発生しました: 年={year}, 月={month}, {e}")
+        # print(df_weekday_dic)
+        return df_weekday_dic
 
 
 def get_month_list():

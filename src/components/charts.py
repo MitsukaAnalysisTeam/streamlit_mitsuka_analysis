@@ -3,10 +3,14 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import numpy as np
 
+
 '''
 グラフ生成用の関数を定義するファイル
 '''
 class DailyReportAnalysisCharts:
+    '''
+    日報分析クラス用の画像生成クラス
+    '''
     def currency_formatter(self, 
                            x, 
                            _):
@@ -120,7 +124,7 @@ class DailyReportAnalysisCharts:
         plt.ticklabel_format(style='plain',axis='y')
         plt.xticks(rotation=20)
         plt.yticks(fontsize = 20)
-        if "売上" in str1:
+        if "売上" in str1 or "客単価" in str1:
             plt.gca().yaxis.set_major_formatter(FuncFormatter(self.currency_formatter))
             plt.ylabel("月の総売上(円)")
         elif "客数" in str1:
@@ -129,4 +133,35 @@ class DailyReportAnalysisCharts:
         plt.xlabel("年/月(営業日数)")
         plt.grid(axis='y', zorder=0)
         st.pyplot(fig)
+
+    def weekly_comparison_bar(
+            self,
+            df1,
+            df2,
+            str1: str,
+            date1: str,
+            date2: str
+    ):
+        fig, ax =  plt.subplots(figsize=(20, 12))
+        plt.bar(np.arange(0,len(df1.index),1),df1[str1],align="edge",color="#46bdc6",label=str1,width=0.1)
+        plt.bar(np.arange(0.2,len(df2.index),1),df2[str1],align="edge",color="#ff6d01",label=str1,width=0.1)
+        plt.legend([date1[:4]+'年'+date1[5:]+'月',date2[:4]+'年'+date2[5:]+'月'],loc="upper left",fontsize=18)
+        if "売上" in str1 or "客単価" in str1:
+            plt.gca().yaxis.set_major_formatter(FuncFormatter(self.currency_formatter))
+            # if "売上" in str1:
+            #     plt.axhline(y=200000, xmin=0, xmax=6)
+            # else:
+            #     plt.axhline(y=2000, xmin=0, xmax=6)
+            plt.ylabel("月の総売上(円)",fontsize = 15)
+        elif "客数" in str1:
+            plt.ylabel("月の総客数(人)",fontsize = 15)
+            # plt.axhline(y=100, xmin=0, xmax=6)
+            plt.gca().yaxis.set_major_formatter(FuncFormatter(self.customer_formatter))
+
+        plt.xticks(np.arange(0.15,len(df1),1),df1.index.tolist(),fontsize = 15)
+        plt.yticks(fontsize = 15)
+        plt.axvline (x=len(df1.index)/2-0.35,color='black',linestyle='--')
+        plt.grid(axis='y')
+        st.pyplot(fig)
+
         

@@ -3,3 +3,4 @@ pandas
 matplotlib
 jpholiday
 japanize_matplotlib
+plotly
