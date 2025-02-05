@@ -18,21 +18,16 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["ホーム",
                                                          "昼ラーメン",
                                                          "アルコール"])
 
-# タブ1: Home
 with tab1:
     st.title("みつか坊主 - ホーム")
     home.show()
 
-# タブ2: Analytics
+
 with tab2:
     st.title("みつか坊主 - 日別分析")
     analytics.daily_report_analysis()
 
 with tab3:
-    '''
-    未実装
-    '''
-
     st.title("みつか坊主 - 時間別分析")
     analytics.hourly_report_analysis()
 
