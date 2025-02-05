@@ -29,9 +29,9 @@ def daily_report_analysis():
         data = pd.read_csv(file_path,index_col=0)
         data = dailyReportAnalysisUtils.convert_daily_report_data(data)
         # 客数か売上を選択
-        option_daily = st.selectbox("↓↓↓売上か客数を選択↓↓↓", ["売上","客数","客単価"])
+        option_daily = st.selectbox("↓↓↓売上か客数か客単価を選択↓↓↓", ["売上","客数","客単価"])
         # グラフ表示
-        st.write("###日単位の売上・客数データ")
+        st.write(f'{selected_month}の日単位の{option_daily}データ')
         if option_daily == "売上":
             dailyReportAnalysisCharts.lunch_night_stacked_bar(data, option_daily+'(昼)', option_daily+'(夜)', '売上額 (¥)')
         elif option_daily == "客数":
@@ -46,7 +46,34 @@ def hourly_report_analysis():
     '''
     時間別分析のグラフ
     '''
-    st.title("開発中...🐭")
+    # インスタンス化
+    hourlyReportAnalysisUtils = utils.HourlyReportAnalysisUtils()
+    hourlyReportAnalysisCharts = charts.HourlyReportAnalysisCharts()
+
+    # バーでファイルを選択
+    month_list = utils.get_month_list()
+    selected_month = st.selectbox("表示したい年月を選択", month_list[::-1])
+    try:
+        option_daily = st.selectbox("↓↓↓売上か客数を選択↓↓↓", ["客数","売上"])
+        # グラフ表示
+        st.write(f'{selected_month}の時間別の{option_daily}データ')
+        if option_daily == "売上":
+            file_path = hourlyReportAnalysisUtils.get_sales_file_path_by_date(selected_month)
+            data = pd.read_csv(file_path,index_col=0)
+            data = hourlyReportAnalysisUtils.convert_hourly_report_data(data)
+            data = hourlyReportAnalysisUtils.get_week_groupby_mean(data)
+            
+            hourlyReportAnalysisCharts.week_comp_bar(data, '売上額 (¥)')
+        elif option_daily == "客数":
+            file_path = hourlyReportAnalysisUtils.get_cus_file_path_by_date(selected_month)
+            data = pd.read_csv(file_path,index_col=0)
+            data = hourlyReportAnalysisUtils.convert_hourly_report_data(data)
+            data = hourlyReportAnalysisUtils.get_week_groupby_mean(data)
+
+            hourlyReportAnalysisCharts.week_comp_bar(data, '客数 (人)')
+    except Exception as e:
+        st.error(f"エラーが発生しました: {e}")
+
 
     
 def monthly_report_analysis():
@@ -56,11 +83,12 @@ def monthly_report_analysis():
     '''
     月毎のグラフ表示
     '''
-    st.write("###月単位の売上・客数データ")
+    st.write("### 月単位の総売上・総客数データ")
     df_dic = dailyReportAnalysisUtils.get_all_daily_report_dic()
     option_monthly_sum = st.selectbox("表示させる項目", [s for s in df_dic["2022"]["10"].columns.tolist()[1:] if "客単価" not in s])
     dailyReportAnalysisCharts.monthly_transfer_sum_bar(df_dic=df_dic,
                                                    str1=option_monthly_sum)
+    st.write("### 月単位の平均売上・平均客数・客単価データ")
     option_monthly_mean = st.selectbox("表示させる項目", df_dic["2022"]["10"].columns.tolist()[1:])
     dailyReportAnalysisCharts.monthly_transfer_mean_bar(df_dic=df_dic,
                                                    str1=option_monthly_mean)
