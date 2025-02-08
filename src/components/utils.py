@@ -253,13 +253,17 @@ def get_month_list():
 
 class SpreadSheets:
     def __init__(self):
-        scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
-        # try:
-        c = ServiceAccountCredentials.from_json_keyfile_name(json.loads(st.secrets["GOOGLE_CLOUD_KEY"]), scope)
-        # except:
-        #     c = ServiceAccountCredentials.from_json_keyfile_name(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/config/mitsuka-streamlit-9d15df827484.json")), scope)
-        self.gs = gspread.authorize(c)
+        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+        try:
+            # secrets から認証情報を取得
+            credentials_dict = st.secrets["GOOGLE_CLOUD_KEY"]  # json.loads() は不要
+            c = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
+        except:
+            # ローカルの JSON ファイルを使用
+            json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/config/mitsuka-streamlit-9d15df827484.json"))
+            c = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
 
+        self.gs = gspread.authorize(c)
     def write_feedback(self, date, text: str):
         try:
             SPREADSHEET_KEY = '1fD72LURrehID1rGWbDn2bzD0Okt0LMORMM2dHJQlXbs'
