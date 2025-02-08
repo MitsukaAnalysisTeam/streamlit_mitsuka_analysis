@@ -7,6 +7,8 @@ import jpholiday
 import japanize_matplotlib
 import os
 import re 
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
  
 japanize_matplotlib.japanize()
 '''
@@ -244,6 +246,47 @@ def get_month_list():
     month_list = generate_month_list(2022, 10, current_year, current_month)
     # print(month_list)
     return month_list
+
+
+class SpreadSheets:
+    def __init__(self):
+        scope = ['https://spreadsheets.google.com/feeds','https://www.googleapis.com/auth/drive']
+        c = ServiceAccountCredentials.from_json_keyfile_name(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/config/mitsuka-streamlit-9d15df827484.json")), scope)
+        self.gs = gspread.authorize(c)
+
+    def write_feedback(self, date, text: str):
+        try:
+            SPREADSHEET_KEY = '1fD72LURrehID1rGWbDn2bzD0Okt0LMORMM2dHJQlXbs'
+            worksheet = self.gs.open_by_key(SPREADSHEET_KEY).worksheet("シート1")
+            
+            # スプレッドシートのデータを取得
+            data = worksheet.get_all_values()
+
+            # データの有無を確認
+            if not data:
+                df = pd.DataFrame(columns=["date", "text"])
+            else:
+                df = pd.DataFrame(data[1:], columns=data[0])
+
+            # 新しいデータを追加
+            new_row = {"date": str(date), "text": text}
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+            # NaN を空文字列に変換
+            df = df.fillna("")
+
+            # 更新
+            worksheet.clear()
+            worksheet.update([df.columns.values.tolist()] + df.values.tolist())
+
+        except Exception as e:
+            print(f"エラーが発生しました: {e}")
+
+
+
+
+
+
 
 
 

@@ -5,3 +5,5 @@ matplotlib
 japanize-matplotlib
 jpholiday
 python-dateutil
+gspread
+oauth2client
