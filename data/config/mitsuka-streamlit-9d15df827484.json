@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "mitsuka-streamlit",
+  "private_key_id": "9d15df827484c3439b490b872afcb134d62819f8",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDgJeDPkpu/jJtL\n+CEQczFy9vg92l7g5y95C0yScJ24AocZRGJWPa7CSrLIA0YDYBCeUuEWCMkPpeKY\nrzg9V+zbc2jQO++1tZ17gJ67AOyV3C0X2Vxa5GlqbLpPVoFlk0xCccf0nyAwxb3O\ntf0EIRtZn70GzZKR7twt6P0mCJXzy76LzxS8hi+ibNTWUnnfArQDTkYdwKVdvaXV\nvPNSIkx34qfynFAG1wdjsXbei++Tc36+1UChNvPK59piz7bpIkp8FKxsm4InNVnS\ngvJcAkX3bXl4ElYVWxF635tJmDFCbV4NcrIH/maJvjI/q+OxvNVyqLOPYUWsduYb\nq9OpGNT7AgMBAAECggEACT+G1wmlg3G5tpi2RId8MtIdy++GmqDvRH9C2Yfr+fug\nt1oq9IP3Ae0zEy2PZfRAu0eQIeia4xplDwerulw2WZeZa34NleG4bbAQ3IZdPJGp\nCqLdPKLP9qQly8A19ortSpCHP4CRQ3HlMvIvTkxPZJNCqVUyBvNkAkDqsPcJuNVL\nbJRN2OO1c7k83g0v0r99NRiE2K/aaPyQazOVJfSRsXY2x8Q1zjy9I7rexIke4nCL\nSFeg9CXRODWq80TOG68YDa+CWmX/or/m69kqvw+p0IWj8Y9Cgc1hIzhkDIp9+EjS\n5Tc0Gk059QTQpDDyPiesPkRyoZAw2Vvg93XIZQLjgQKBgQD74MTbjzuQqrVGEaO7\nj5vdOTlVlr+TOE/hGkcBFbkgXfFdkRRjEnmEAq0snvmihiWDAegCZH5O8XseyUOJ\n9bV8xnOJWaKfehw9Hf0pxLdVWwUimM0Kaei84JYJjQtTLNaAtdHCvbww2XY1JpfG\nydNSW2yIOpikgh57ZWlJhqpHxQKBgQDj0O98F+/j8cgqGhLrwpdRDbSQ+zLEDgvu\naUh4JkijMvIGaBB8oM+Pc/NkDlnuClRCF4nmx3Dwxphc1imVbN+S7/2JJFvpbAF5\ngoasi7QilOKdYsEfo+IlllsO/1bayrilewcO9U3sxBb6uwLXT359++dBe+aycFXs\nqwRyZAO1vwKBgGRZMlS/Bd4nBL17vZ22I0TJzZvZyU1f/AMUswEtpGnOw6Chclve\nOmdroY7Lb21ewIcnNUXuv5u3/XNQgAXwzHN/pPwtp+qdfa6jyf7gDqKE9tDHy7jA\nZScK2vvHI6HplTQGPCG38cgMe1nFnGZodjazkdPcdH/mDzreNkpCyoh5AoGBAMZX\nh8mAhajtPhn5rXN5bYhx6D05lo8+s4CURTXmDuOXXUPaok//KfZ5OvRn0j/+2jDY\nkYVNKrVWEhzxkC66JUSmkRQvhZ4KHJaP33SmBOT+vvXLntxPMHsNFqZOBG5khLH+\nFL0fMQLsDh2pZ+XRHg3NnR9UIhxE1WpB0pNNJDW9AoGAdLd8Feo14+m9FPS/CTtQ\n+O2sC+/IgGqG0ELsIu/Hgk6vMiqBdhJfZV82V0N2e73HPbiiAxUc40Z19GZ95SoU\nXBtAeVTEXchWrIXjDdpCS0UPFNMJpUY8G+tuh3Af76X2qscO6Fh+DipBDT7VOmEW\ncjDLCR/RfJoo0OqyLicR0C4=\n-----END PRIVATE KEY-----\n",
+  "client_email": "sheet-mitsuka@mitsuka-streamlit.iam.gserviceaccount.com",
+  "client_id": "108015723327455122378",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/sheet-mitsuka%40mitsuka-streamlit.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
