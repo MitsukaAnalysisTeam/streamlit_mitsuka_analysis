@@ -4,9 +4,6 @@ from datetime import datetime
 import os
 import src.components.utils as utils
 
-# フィードバックを保存するファイル名
-FEEDBACK_FILE = data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/raw/feedback/feedback.csv"))
-
 def save_feedback(question):
     """意見をCSVファイルに保存"""
     spreadsheet = utils.SpreadSheets()
