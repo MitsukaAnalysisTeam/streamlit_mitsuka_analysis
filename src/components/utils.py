@@ -264,8 +264,10 @@ class SpreadSheets:
             c = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
 
         self.gs = gspread.authorize(c)
+
     def write_feedback(self, date, text: str):
         try:
+            # TODO: .envファイルに格納する
             SPREADSHEET_KEY = '1fD72LURrehID1rGWbDn2bzD0Okt0LMORMM2dHJQlXbs'
             worksheet = self.gs.open_by_key(SPREADSHEET_KEY).worksheet("シート1")
             
