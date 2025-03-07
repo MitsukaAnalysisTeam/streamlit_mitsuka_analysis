@@ -1,12 +1,17 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import sys
 import os
-import src.components.utils as utils
+
+# プロジェクトのルートディレクトリをモジュール検索パスに追加
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from src.components.utils.SpreadSheets import SpreadSheets
+
 
 def save_feedback(question):
     """意見をCSVファイルに保存"""
-    spreadsheet = utils.SpreadSheets()
+    spreadsheet = SpreadSheets()
     current_date = datetime.now()
     spreadsheet.write_feedback(date=current_date,text=question)
 

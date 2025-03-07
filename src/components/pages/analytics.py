@@ -2,9 +2,13 @@ import streamlit as st
 import pandas as pd
 import os
 import numpy as np
-import src.components.charts as charts
-import src.components.utils as utils
-
+import sys
+# プロジェクトのルートディレクトリをモジュール検索パスに追加
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from src.components.charts.DailyReportAnalysisCharts import DailyReportAnalysisCharts
+from src.components.charts.HourlyReportAnalysisCharts import HourlyReportAnalysisCharts
+from src.components.utils.DailyReportAnalysisUtils import DailyReportAnalysisUtils
+from src.components.utils.HourlyReportAnalysisUtils import HourlyReportAnalysisUtils
 
 def show():
     daily_report_analysis()
@@ -16,11 +20,11 @@ def daily_report_analysis():
     ある月のグラフ表示
     '''
     # インスタンス化
-    dailyReportAnalysisUtils = utils.DailyReportAnalysisUtils()
-    dailyReportAnalysisCharts = charts.DailyReportAnalysisCharts()
+    dailyReportAnalysisUtils = DailyReportAnalysisUtils()
+    dailyReportAnalysisCharts = DailyReportAnalysisCharts()
 
     # バーでファイルを選択
-    month_list = utils.get_month_list()
+    month_list = dailyReportAnalysisUtils.get_month_list()
     selected_month = st.selectbox("日報ファイルを選択", month_list[::-1])
 
     file_path = dailyReportAnalysisUtils.get_file_path_by_date(selected_month)
@@ -47,11 +51,11 @@ def hourly_report_analysis():
     時間別分析のグラフ
     '''
     # インスタンス化
-    hourlyReportAnalysisUtils = utils.HourlyReportAnalysisUtils()
-    hourlyReportAnalysisCharts = charts.HourlyReportAnalysisCharts()
+    hourlyReportAnalysisUtils = HourlyReportAnalysisUtils()
+    hourlyReportAnalysisCharts = HourlyReportAnalysisCharts()
 
     # バーでファイルを選択
-    month_list = utils.get_month_list()
+    month_list = HourlyReportAnalysisUtils.get_month_list()
     selected_month = st.selectbox("表示したい年月を選択", month_list[::-1])
     try:
         option_daily = st.selectbox("↓↓↓売上か客数を選択↓↓↓", ["客数","売上"])
@@ -78,8 +82,8 @@ def hourly_report_analysis():
     
 def monthly_report_analysis():
     # インスタンス化
-    dailyReportAnalysisUtils = utils.DailyReportAnalysisUtils()
-    dailyReportAnalysisCharts = charts.DailyReportAnalysisCharts()
+    dailyReportAnalysisUtils = DailyReportAnalysisUtils()
+    dailyReportAnalysisCharts = DailyReportAnalysisCharts()
     '''
     月毎のグラフ表示
     '''
@@ -97,11 +101,10 @@ def weekly_report_analysis():
     '''
     曜日別のグラフ表示
     '''
-    month_list = utils.get_month_list()
     # インスタンス化
-    dailyReportAnalysisUtils = utils.DailyReportAnalysisUtils()
-    dailyReportAnalysisCharts = charts.DailyReportAnalysisCharts()
-
+    dailyReportAnalysisUtils = DailyReportAnalysisUtils()
+    dailyReportAnalysisCharts = DailyReportAnalysisCharts()
+    month_list = dailyReportAnalysisUtils.get_month_list()
     df_dic = dailyReportAnalysisUtils.get_all_daily_report_dic()
     left_selected_month_for_weekly = st.selectbox("グラフの左側にくる年月", month_list[:-1][::-1])
     right_selected_month_for_weekly = st.selectbox("グラフの右側にくる年月", month_list[::-1])
