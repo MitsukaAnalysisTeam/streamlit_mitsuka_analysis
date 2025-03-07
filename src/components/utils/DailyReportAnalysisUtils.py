@@ -14,6 +14,7 @@ import streamlit as st
 import json
  
 japanize_matplotlib.japanize()
+
 '''
 データの処理を行うファイル。
 '''
@@ -81,7 +82,7 @@ class DailyReportAnalysisUtils:
             date: str
             )-> str: 
         # データフォルダのパス
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/raw/daily_report"))
+        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../data/raw/daily_report"))
         
         # ディレクトリ内のCSVファイルをリストアップ
         csv_files = [f for f in os.listdir(data_dir) if f.endswith('.csv')]
@@ -98,7 +99,7 @@ class DailyReportAnalysisUtils:
     def set_all_daily_report_dic(
             self,
     ) -> dict:
-        month_list = get_month_list()
+        month_list = self.get_month_list()
         df_daily_report_dic = {}
         for date in month_list:
             file_path = self.get_file_path_by_date(date)
@@ -162,143 +163,26 @@ class DailyReportAnalysisUtils:
         # print(df_weekday_dic)
         return df_weekday_dic
     
-class HourlyReportAnalysisUtils:
-    '''
-    時間別データ用のメソッド追加クラス
-    '''
-    def convert_hourly_report_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        # 必要なカラムだけを抽出し、全ての値が0の行を削除
-        df = df.loc[:, ['11時', '12時', '13時', '14時', '15時', '16時', '17時', '18時', '19時', '20時', '21時', '22時', '23時']].dropna()
-        df = df.loc[(df != 0).any(axis=1)]
-        # インデックスを datetime 型に変換（保持）
-        df.index = pd.to_datetime(df.index)
 
-        # インデックスから曜日を取得し、"曜日" カラムとして追加
-        df["曜日"] = df.index.dayofweek.map({0: '月', 1: '火', 2: '水', 3: '木', 4: '金', 5: '土', 6: '日'})
-        
-        # 表示の際にインデックスをフォーマット
-        df.index = df.index.map(lambda x: x.strftime("%Y-%m-%d"))
-        return df
 
-    
-    def get_cus_file_path_by_date(
-            self,
-            date: str
-            )-> str: 
-        # データフォルダのパス
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/processed/hourly_report/customer_num"))
-        
-        # ディレクトリ内のCSVファイルをリストアップ
-        csv_files = [f for f in os.listdir(data_dir) if f.endswith('.csv')]
+    def get_month_list(self):
+        now = datetime.now() - relativedelta(months=1)
+        current_year = now.year
+        current_month = now.month
 
-        matched_file = [s for s in csv_files if re.match(f'.*{date}.*', s)]
+        def generate_month_list(start_year, start_month, end_year, end_month):
+            start_date = datetime(start_year, start_month, 1)
+            end_date = datetime(end_year, end_month, 1)
+            month_list = []
 
-        # ファイルが見つかった場合はフルパスを返す
-        if matched_file:
-            return os.path.join(data_dir, matched_file[0])
-        
-        # 見つからない場合は空文字列を返す
-        return ""
-    
-    def get_sales_file_path_by_date(
-            self,
-            date: str
-            )-> str: 
-        # データフォルダのパス
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/processed/hourly_report/sales_sum"))
-        
-        # ディレクトリ内のCSVファイルをリストアップ
-        csv_files = [f for f in os.listdir(data_dir) if f.endswith('.csv')]
+            while start_date <= end_date:
+                # 月の部分に先頭のゼロを付けないフォーマットを使用
+                month_list.append(f"{start_date.year}_{start_date.month}")
+                start_date += timedelta(days=31)
+                start_date = start_date.replace(day=1)
 
-        matched_file = [s for s in csv_files if re.match(f'.*{date}.*', s)]
+            return month_list
 
-        # ファイルが見つかった場合はフルパスを返す
-        if matched_file:
-            return os.path.join(data_dir, matched_file[0])
-        
-        # 見つからない場合は空文字列を返す
-        return ""
-    
-    def get_week_groupby_mean(
-            self,
-            df: pd.DataFrame
-            )->pd.DataFrame:
-        week_group_mean = df.groupby('曜日').mean().round(1)
-        week_group_mean = week_group_mean.reindex(index=['水', '木', '金','土','日'])
-        return week_group_mean
-    
-
-def get_month_list():
-    now = datetime.now() - relativedelta(months=1)
-    current_year = now.year
-    current_month = now.month
-
-    def generate_month_list(start_year, start_month, end_year, end_month):
-        start_date = datetime(start_year, start_month, 1)
-        end_date = datetime(end_year, end_month, 1)
-        month_list = []
-
-        while start_date <= end_date:
-            # 月の部分に先頭のゼロを付けないフォーマットを使用
-            month_list.append(f"{start_date.year}_{start_date.month}")
-            start_date += timedelta(days=31)
-            start_date = start_date.replace(day=1)
-
+        month_list = generate_month_list(2022, 10, current_year, current_month)
+        # print(month_list)
         return month_list
-
-    month_list = generate_month_list(2022, 10, current_year, current_month)
-    # print(month_list)
-    return month_list
-
-
-class SpreadSheets:
-    def __init__(self):
-        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        try:
-            # secrets から認証情報を取得
-            credentials_dict = st.secrets["GOOGLE_CLOUD_KEY"]  # json.loads() は不要
-            c = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
-        except:
-            # ローカルの JSON ファイルを使用
-            json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data/config/mitsuka-streamlit-9d15df827484.json"))
-            c = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
-
-        self.gs = gspread.authorize(c)
-
-    def write_feedback(self, date, text: str):
-        try:
-            # TODO: .envファイルに格納する
-            SPREADSHEET_KEY = '1fD72LURrehID1rGWbDn2bzD0Okt0LMORMM2dHJQlXbs'
-            worksheet = self.gs.open_by_key(SPREADSHEET_KEY).worksheet("シート1")
-            
-            # スプレッドシートのデータを取得
-            data = worksheet.get_all_values()
-
-            # データの有無を確認
-            if not data:
-                df = pd.DataFrame(columns=["date", "text"])
-            else:
-                df = pd.DataFrame(data[1:], columns=data[0])
-
-            # 新しいデータを追加
-            new_row = {"date": str(date), "text": text}
-            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-
-            # NaN を空文字列に変換
-            df = df.fillna("")
-
-            # 更新
-            worksheet.clear()
-            worksheet.update([df.columns.values.tolist()] + df.values.tolist())
-
-        except Exception as e:
-            print(f"エラーが発生しました: {e}")
-
-
-
-
-
-
-
-
-

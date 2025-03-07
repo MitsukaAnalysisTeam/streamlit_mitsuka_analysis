@@ -4,11 +4,10 @@ import os
 
 # プロジェクトのルートディレクトリをモジュール検索パスに追加
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 # 各ページモジュールをインポート
-from src.pages import home, analytics
+from components.pages import home
+from components.pages import analytics
 
-# タブの作成
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["ホーム", 
                                                          "日報分析",
                                                          "時間別分析", 
