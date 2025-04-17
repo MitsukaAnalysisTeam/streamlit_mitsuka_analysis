@@ -8,57 +8,53 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from components.pages import home
 from components.pages import analytics
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["ホーム", 
-                                                         "日報分析",
-                                                         "時間別分析", 
-                                                         "月別分析",
-                                                         "曜日別分析",
-                                                         "夜ラーメン",
-                                                         "昼ラーメン",
-                                                         "アルコール"])
+# タブの名前リスト
+tab_names = [
+    "ホーム",
+    "日報分析",
+    "時間別分析",
+    "月別分析",
+    "曜日別分析",
+    "夜ラーメン",
+    "昼ラーメン",
+    "アルコール"
+]
 
-with tab1:
+# st.tabs を使ってタブを作成
+tabs = st.tabs(tab_names)
+
+# 各タブごとに内容を記述
+with tabs[0]:
     st.title("みつか坊主 - ホーム")
     home.show()
 
-
-with tab2:
+with tabs[1]:
     st.title("みつか坊主 - 日別分析")
     analytics.daily_report_analysis()
 
-with tab3:
+with tabs[2]:
     st.title("みつか坊主 - 時間別分析")
     analytics.hourly_report_analysis()
 
-with tab4:
+with tabs[3]:
     st.title("みつか坊主 - 月別分析")
     analytics.monthly_report_analysis()
 
-with tab5:
+with tabs[4]:
     st.title("みつか坊主 - 曜日別分析")
     analytics.weekly_report_analysis()
 
-with tab6:
-    '''
-    未実装
-    '''
-
+with tabs[5]:
     st.title("みつか坊主 - 夜ラーメン")
+    st.write("未実装")
     analytics.night_ramen_analysis()
-    
-with tab7:
-    '''
-    未実装
-    '''
 
+with tabs[6]:
     st.title("みつか坊主 - 昼ラーメン")
+    st.write("未実装")
     analytics.lunch_ramen_analysis()
 
-
-with tab8:
-    '''
-    未実装
-    '''
-
+with tabs[7]:
     st.title("みつか坊主 - アルコール")
+    st.write("未実装")
     analytics.alchohol_analysis()

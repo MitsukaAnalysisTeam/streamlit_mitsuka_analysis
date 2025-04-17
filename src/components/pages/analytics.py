@@ -10,6 +10,32 @@ from src.components.charts.HourlyReportAnalysisCharts import HourlyReportAnalysi
 from src.components.utils.DailyReportAnalysisUtils import DailyReportAnalysisUtils
 from src.components.utils.HourlyReportAnalysisUtils import HourlyReportAnalysisUtils
 
+"""
+インスタンス化は一回だけにする
+キャッシュを保存することで複数回インスタンス化することを防ぐ
+"""
+@st.cache_resource
+def get_daily_report_analysis_utils() -> DailyReportAnalysisUtils:
+    return DailyReportAnalysisUtils()
+
+@st.cache_resource
+def get_daily_report_analysis_charts() -> DailyReportAnalysisCharts:
+    return DailyReportAnalysisCharts()
+
+@st.cache_resource
+def get_hourly_report_analysis_utils() -> HourlyReportAnalysisUtils:
+    return HourlyReportAnalysisUtils()
+
+@st.cache_resource
+def get_hourly_report_analysis_charts() -> HourlyReportAnalysisCharts:
+    return HourlyReportAnalysisCharts()
+
+# ここでキャッシュされたインスタンスをグローバル変数に格納（実際の関数内でも取得可能）
+dailyReportAnalysisUtils = get_daily_report_analysis_utils()
+dailyReportAnalysisCharts = get_daily_report_analysis_charts()
+hourlyReportAnalysisUtils = get_hourly_report_analysis_utils()
+hourlyReportAnalysisCharts = get_hourly_report_analysis_charts()
+
 def show():
     daily_report_analysis()
     monthly_report_analysis()
@@ -19,19 +45,13 @@ def daily_report_analysis():
     '''
     ある月のグラフ表示
     '''
-    # インスタンス化
-    dailyReportAnalysisUtils = DailyReportAnalysisUtils()
-    dailyReportAnalysisCharts = DailyReportAnalysisCharts()
-
     # バーでファイルを選択
     month_list = dailyReportAnalysisUtils.get_month_list()
     selected_month = st.selectbox("日報ファイルを選択", month_list[::-1])
 
-    file_path = dailyReportAnalysisUtils.get_file_path_by_date(selected_month)
     try:
         # データの読み込み
-        data = pd.read_csv(file_path,index_col=0)
-        data = dailyReportAnalysisUtils.convert_daily_report_data(data)
+        data = dailyReportAnalysisUtils.get_df_from_dic(selected_month)
         # 客数か売上を選択
         option_daily = st.selectbox("↓↓↓売上か客数か客単価を選択↓↓↓", ["売上","客数","客単価"])
         # グラフ表示
@@ -50,10 +70,6 @@ def hourly_report_analysis():
     '''
     時間別分析のグラフ
     '''
-    # インスタンス化
-    hourlyReportAnalysisUtils = HourlyReportAnalysisUtils()
-    hourlyReportAnalysisCharts = HourlyReportAnalysisCharts()
-
     # バーでファイルを選択
     month_list = HourlyReportAnalysisUtils.get_month_list()
     selected_month = st.selectbox("表示したい年月を選択", month_list[::-1])
@@ -82,13 +98,13 @@ def hourly_report_analysis():
     
 def monthly_report_analysis():
     # インスタンス化
-    dailyReportAnalysisUtils = DailyReportAnalysisUtils()
-    dailyReportAnalysisCharts = DailyReportAnalysisCharts()
+    # dailyReportAnalysisUtils = DailyReportAnalysisUtils()
+    # dailyReportAnalysisCharts = DailyReportAnalysisCharts()
     '''
     月毎のグラフ表示
     '''
     st.write("### 月単位の総売上・総客数データ")
-    df_dic = dailyReportAnalysisUtils.get_all_daily_report_dic()
+    df_dic = dailyReportAnalysisUtils.df_dic
     option_monthly_sum = st.selectbox("表示させる項目", [s for s in df_dic["2022"]["10"].columns.tolist()[1:] if "客単価" not in s])
     dailyReportAnalysisCharts.monthly_transfer_sum_bar(df_dic=df_dic,
                                                    str1=option_monthly_sum)
@@ -102,10 +118,10 @@ def weekly_report_analysis():
     曜日別のグラフ表示
     '''
     # インスタンス化
-    dailyReportAnalysisUtils = DailyReportAnalysisUtils()
-    dailyReportAnalysisCharts = DailyReportAnalysisCharts()
+    # dailyReportAnalysisUtils = DailyReportAnalysisUtils()
+    # dailyReportAnalysisCharts = DailyReportAnalysisCharts()
     month_list = dailyReportAnalysisUtils.get_month_list()
-    df_dic = dailyReportAnalysisUtils.get_all_daily_report_dic()
+    df_dic = dailyReportAnalysisUtils.df_dic
     left_selected_month_for_weekly = st.selectbox("グラフの左側にくる年月", month_list[:-1][::-1])
     right_selected_month_for_weekly = st.selectbox("グラフの右側にくる年月", month_list[::-1])
     option_weekly_mean = st.selectbox("表示", df_dic["2022"]["10"].columns.tolist()[1::])

@@ -12,13 +12,17 @@ from oauth2client.service_account import ServiceAccountCredentials
 import streamlit as st
 
 import json
- 
+import src.components.utils.SpreadSheets as SpreadSheets
+
 japanize_matplotlib.japanize()
 
 '''
 データの処理を行うファイル。
 '''
 class DailyReportAnalysisUtils:
+    def __init__(self) -> None:
+        self.df_dic = self.get_all_daily_report_dic()
+
     '''
     日報データ用のメソッド追加クラス
     '''
@@ -77,93 +81,6 @@ class DailyReportAnalysisUtils:
         df=df.set_axis(date_index, axis="index")
         return df
     
-    def get_file_path_by_date(
-            self,
-            date: str
-            )-> str: 
-        # データフォルダのパス
-        data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../data/raw/daily_report"))
-        
-        # ディレクトリ内のCSVファイルをリストアップ
-        csv_files = [f for f in os.listdir(data_dir) if f.endswith('.csv')]
-
-        matched_file = [s for s in csv_files if re.match(f'.*{date}.*', s)]
-
-        # ファイルが見つかった場合はフルパスを返す
-        if matched_file:
-            return os.path.join(data_dir, matched_file[0])
-        
-        # 見つからない場合は空文字列を返す
-        return ""
-    
-    def set_all_daily_report_dic(
-            self,
-    ) -> dict:
-        month_list = self.get_month_list()
-        df_daily_report_dic = {}
-        for date in month_list:
-            file_path = self.get_file_path_by_date(date)
-            # 年と月を取得
-            year = date[:4]
-            month = date.split('_')[1]
-
-            # 辞書に年ごとのエントリを初期化
-            if year not in df_daily_report_dic:
-                df_daily_report_dic[year] = {}
-
-            # CSVを読み込み、辞書に追加
-            try:
-                df = pd.read_csv(file_path,index_col = 0)
-                df_daily_report_dic[year][month] = df
-            except Exception as e:
-                    print(f"エラーが発生しました: {file_path}, {e}")
-        
-        # print(df_daily_report_dic)
-        return df_daily_report_dic
-    
-    def get_all_daily_report_dic(self) -> dict:
-        """
-        月ごとのCSVデータを取得し、convert_daily_report_dataを適用する。
-        Returns:
-            dict: 年ごとの月別変換済みデータフレーム辞書
-        """
-        # データをセット
-        df_dic = self.set_all_daily_report_dic()
-
-        # すべてのDataFrameにconvert_daily_report_dataを適用
-        for year, months in df_dic.items():
-            for month, df in months.items():
-                try:
-                    # DataFrameを変換
-                    df_dic[year][month] = self.convert_daily_report_data(df)
-                except Exception as e:
-                    print(f"エラーが発生しました: 年={year}, 月={month}, {e}")
-        # print(df_dic)
-        return df_dic
-
-    def get_all_weekly_report_dic(self):
-        df_weekday_dic = {}
-        # データをセット
-        df_dic = self.get_all_daily_report_dic()
-
-        # すべてのDataFrameに `convert_daily_report_data` を適用
-        for year, months in df_dic.items():
-            if year not in df_weekday_dic:
-                df_weekday_dic[year] = {}  # 年ごとに辞書を作成
-            for month, df in months.items():
-                try:
-                    # 月ごとの辞書を作成
-                    df_weekday_dic[year][month] = (
-                        df.groupby('曜日').mean()
-                        .reindex(index=['水', '木', '金', '土', '日', '祝日'])
-                        .fillna(0)
-                    )
-                except Exception as e:
-                    print(f"エラーが発生しました: 年={year}, 月={month}, {e}")
-        # print(df_weekday_dic)
-        return df_weekday_dic
-    
-
 
     def get_month_list(self):
         now = datetime.now() - relativedelta(months=1)
@@ -186,3 +103,221 @@ class DailyReportAnalysisUtils:
         month_list = generate_month_list(2022, 10, current_year, current_month)
         # print(month_list)
         return month_list
+    
+    """
+    日報データをスプレッドシートから取得する手順
+    1. SpreadSheet クラスを用いて、スプレッドシートの中からidを取得
+        Folderのid、日報名が必要
+    2. idの中にあるワークシートを名前(year/mm)により取得
+    3. dfへ
+    """
+    def get_df_by_date(
+            self,
+            date: str
+            ) -> pd.DataFrame:
+        try:
+            date = date.replace('_', '/')
+            spreadsheet = SpreadSheets.SpreadSheets()
+            # ディレクトリ内のCSVファイルをリストアップ
+            id = spreadsheet.get_spreadsheet_id_by_name(
+                folder_id="1zPbemG8PafxBNUAmsIkqTNM_4RSBh3lZ",
+                spreadsheet_name=f"新店舗_日報_{date[:4]}"
+            )
+            ss = spreadsheet.get_spreadsheet_by_id(id)
+            worksheet = ss.worksheet(date)
+            df = spreadsheet.get_df_from_worksheet(worksheet)
+            if "日付" in df.columns:
+                df = df.set_index("日付")
+                # インデックスが空（空文字または空白のみ）の行を削除
+                df = df[df.index.astype(str).str.strip() != ""]
+            df = df.replace(r'^\s*$', np.nan, regex=True)
+            return df
+        except:
+            return pd.DataFrame()
+        
+    def set_all_daily_report_dic(self) -> dict:
+        spreadsheet = SpreadSheets.SpreadSheets()
+        month_list = self.get_month_list()
+        # 利用する年のリストを先に取得する
+        years = set(date[:4] for date in month_list)
+        # 各年ごとにスプレッドシートオブジェクトをキャッシュする辞書
+        ss_dic = {}
+        for year in years:
+            try:
+                sheet_id = spreadsheet.get_spreadsheet_id_by_name(
+                    folder_id="1zPbemG8PafxBNUAmsIkqTNM_4RSBh3lZ",
+                    spreadsheet_name=f"新店舗_日報_{year}"
+                )
+                ss_dic[year] = spreadsheet.get_spreadsheet_by_id(sheet_id)
+            except Exception as e:
+                print(f"年 {year} のスプレッドシート取得エラー: {e}")
+
+        df_daily_report_dic = {}
+        for date in month_list:
+            year = date[:4]
+            month = date.split('_')[1]
+            # キャッシュからスプレッドシートを取得
+            ss = ss_dic.get(year)
+            if not ss:
+                continue  # その年のスプレッドシートが取得できていなければスキップ
+
+            try:
+                sheet_title = date.replace('_', '/')
+                worksheet = ss.worksheet(sheet_title)
+                df = spreadsheet.get_df_from_worksheet(worksheet)
+                if "日付" in df.columns:
+                    df = df.set_index("日付")
+                    df = df[df.index.astype(str).str.strip() != ""]
+                df = df.replace(r'^\s*$', np.nan, regex=True)
+                if year not in df_daily_report_dic:
+                    df_daily_report_dic[year] = {}
+                df_daily_report_dic[year][month] = df
+            except Exception as e:
+                print(f"エラーが発生しました: {e}")
+        
+        return df_daily_report_dic
+
+    def get_all_daily_report_dic(self) -> dict:
+        """
+        月ごとのCSVデータを取得し、convert_daily_report_dataを適用する。
+        Returns:
+            dict: 年ごとの月別変換済みデータフレーム辞書
+        """
+        # データをセット
+        __df_dic = self.set_all_daily_report_dic()
+
+        # すべてのDataFrameにconvert_daily_report_dataを適用
+        for year, months in __df_dic.items():
+            for month, df in months.items():
+                try:
+                    # DataFrameを変換
+                    __df_dic[year][month] = self.convert_daily_report_data(df)
+                except Exception as e:
+                    print(f"エラーが発生しました: 年={year}, 月={month}, {e}")
+        # print(df_dic)
+        return __df_dic
+
+    def get_all_weekly_report_dic(self):
+        df_weekday_dic = {}
+        # データをセット
+        __df_dic = self.df_dic
+
+        # すべてのDataFrameに `convert_daily_report_data` を適用
+        for year, months in __df_dic.items():
+            if year not in df_weekday_dic:
+                df_weekday_dic[year] = {}  # 年ごとに辞書を作成
+            for month, df in months.items():
+                try:
+                    # 月ごとの辞書を作成
+                    df_weekday_dic[year][month] = (
+                        df.groupby('曜日').mean()
+                        .reindex(index=['水', '木', '金', '土', '日', '祝日'])
+                        .fillna(0)
+                    )
+                except Exception as e:
+                    print(f"エラーが発生しました: 年={year}, 月={month}, {e}")
+        # print(df_weekday_dic)
+        return df_weekday_dic
+    
+    def get_df_from_dic(self, date: str):
+        # 年と月を取得
+        year = date[:4]
+        month = date.split('_')[1]
+
+        # 辞書に年ごとのエントリを初期化
+        if year not in self.df_dic:
+            self.df_dic[year] = {}
+
+        try:
+            df = self.df_dic[year][month]
+            return df
+        except Exception as e:
+                print(f"エラーが発生しました: {e}")
+
+
+   # def get_file_path_by_date(
+    #         self,
+    #         date: str
+    #         )-> str: 
+    #     # データフォルダのパス
+    #     data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../data/raw/daily_report"))
+        
+    #     # ディレクトリ内のCSVファイルをリストアップ
+    #     csv_files = [f for f in os.listdir(data_dir) if f.endswith('.csv')]
+
+    #     matched_file = [s for s in csv_files if re.match(f'.*{date}.*', s)]
+
+    #     # ファイルが見つかった場合はフルパスを返す
+    #     if matched_file:
+    #         return os.path.join(data_dir, matched_file[0])
+        
+    #     # 見つからない場合は空文字列を返す
+    #     return ""
+    
+    # def set_all_daily_report_dic(
+    #         self,
+    # ) -> dict:
+    #     month_list = self.get_month_list()
+    #     df_daily_report_dic = {}
+    #     for date in month_list:
+    #         file_path = self.get_file_path_by_date(date)
+    #         # 年と月を取得
+    #         year = date[:4]
+    #         month = date.split('_')[1]
+
+    #         # 辞書に年ごとのエントリを初期化
+    #         if year not in df_daily_report_dic:
+    #             df_daily_report_dic[year] = {}
+
+    #         # CSVを読み込み、辞書に追加
+    #         try:
+    #             df = pd.read_csv(file_path,index_col = 0)
+    #             df_daily_report_dic[year][month] = df
+    #         except Exception as e:
+    #                 print(f"エラーが発生しました: {file_path}, {e}")
+        
+    #     # print(df_daily_report_dic)
+    #     return df_daily_report_dic
+    
+    # def get_all_daily_report_dic(self) -> dict:
+    #     """
+    #     月ごとのCSVデータを取得し、convert_daily_report_dataを適用する。
+    #     Returns:
+    #         dict: 年ごとの月別変換済みデータフレーム辞書
+    #     """
+    #     # データをセット
+    #     df_dic = self.set_all_daily_report_dic()
+
+    #     # すべてのDataFrameにconvert_daily_report_dataを適用
+    #     for year, months in df_dic.items():
+    #         for month, df in months.items():
+    #             try:
+    #                 # DataFrameを変換
+    #                 df_dic[year][month] = self.convert_daily_report_data(df)
+    #             except Exception as e:
+    #                 print(f"エラーが発生しました: 年={year}, 月={month}, {e}")
+    #     # print(df_dic)
+    #     return df_dic
+
+    # def get_all_weekly_report_dic(self):
+    #     df_weekday_dic = {}
+    #     # データをセット
+    #     df_dic = self.get_all_daily_report_dic()
+
+    #     # すべてのDataFrameに `convert_daily_report_data` を適用
+    #     for year, months in df_dic.items():
+    #         if year not in df_weekday_dic:
+    #             df_weekday_dic[year] = {}  # 年ごとに辞書を作成
+    #         for month, df in months.items():
+    #             try:
+    #                 # 月ごとの辞書を作成
+    #                 df_weekday_dic[year][month] = (
+    #                     df.groupby('曜日').mean()
+    #                     .reindex(index=['水', '木', '金', '土', '日', '祝日'])
+    #                     .fillna(0)
+    #                 )
+    #             except Exception as e:
+    #                 print(f"エラーが発生しました: 年={year}, 月={month}, {e}")
+    #     # print(df_weekday_dic)
+    #     return df_weekday_dic
+
