@@ -55,31 +55,30 @@ class DailyReportAnalysisUtils:
         df = self.__df_reindex_date(df)
         return df
 
-    def __add_df_jpholiday(      
-            self, 
-            df: pd.DataFrame
-            ) -> pd.DataFrame:
-        date_month=df.index.tolist()
-        for k in range(len(date_month)):
-            date_month[k] = str(date_month[k])
-            date_month[k] = datetime.strptime(str(date_month[k]), '%Y/%m/%d')
-            date_month[k] = date(date_month[k].year, date_month[k].month, date_month[k].day)
-        for d in range(len(date_month)):
-            if jpholiday.is_holiday(date_month[d]):  # 祝日の場合はTrueを追加
-                df.iat[d,0]='祝日'
+    def __add_df_jpholiday(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        index（DatetimeIndex）を直接使って祝日判定し、
+        曜日列を書き換えます。
+        """
+        # DatetimeIndex のままループ
+        for i, dt in enumerate(df.index):
+            # dt は pandas.Timestamp
+            if jpholiday.is_holiday(dt.date()):
+                df.iat[i, 0] = '祝日'   # 1列目（曜日）を書き換え
+        return df
+    
+    def __df_reindex_date(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        インデックスを「月/日(曜日)」の文字列に置き換え。
+        """
+        new_index = [
+            f"{ts.month}/{ts.day}({df.iloc[i,0]})"
+            for i, ts in enumerate(df.index)
+        ]
+        df = df.copy()
+        df.index = new_index
         return df
 
-    def __df_reindex_date(
-            self,
-            df: pd.DataFrame
-            ) -> pd.DataFrame:
-        date_index = []
-        index_list = df.index.tolist()
-        for i in range(len(index_list)):
-            index_list[i] = index_list[i][5:] + '(' +df.iat[i,0]+ ')'
-            date_index.append(index_list[i])
-        df=df.set_axis(date_index, axis="index")
-        return df
     
 
     def get_month_list(self):
@@ -111,6 +110,31 @@ class DailyReportAnalysisUtils:
     2. idの中にあるワークシートを名前(year/mm)により取得
     3. dfへ
     """
+
+    def get_df_from_ss(self) -> pd.DataFrame:
+        try:
+            spreadsheet = SpreadSheets.SpreadSheets()
+            ss_id = spreadsheet.get_spreadsheet_id_by_name(
+                folder_id="1zPbemG8PafxBNUAmsIkqTNM_4RSBh3lZ",
+                spreadsheet_name="日報_all"
+            )
+            ss = spreadsheet.get_spreadsheet_by_id(ss_id)
+            worksheet = ss.worksheet("シート1")
+            df = spreadsheet.get_df_from_worksheet(worksheet)
+
+            if "日付" in df.columns:
+                # フォーマット指定を外して自動判別に任せる
+                df["日付"] = pd.to_datetime(df["日付"], errors="coerce")
+                df = df.dropna(subset=["日付"])   # 変換失敗行を除去
+                df = df.set_index("日付")
+            df = df.replace(r"^\s*$", np.nan, regex=True)
+            return df
+        except Exception as e:
+            print(f"get_df_from_ss でエラー: {e}")
+            return pd.DataFrame()
+
+
+        
     def get_df_by_date(
             self,
             date: str
@@ -136,46 +160,30 @@ class DailyReportAnalysisUtils:
             return pd.DataFrame()
         
     def set_all_daily_report_dic(self) -> dict:
-        spreadsheet = SpreadSheets.SpreadSheets()
         month_list = self.get_month_list()
-        # 利用する年のリストを先に取得する
-        years = set(date[:4] for date in month_list)
-        # 各年ごとにスプレッドシートオブジェクトをキャッシュする辞書
-        ss_dic = {}
-        for year in years:
-            try:
-                sheet_id = spreadsheet.get_spreadsheet_id_by_name(
-                    folder_id="1zPbemG8PafxBNUAmsIkqTNM_4RSBh3lZ",
-                    spreadsheet_name=f"新店舗_日報_{year}"
-                )
-                ss_dic[year] = spreadsheet.get_spreadsheet_by_id(sheet_id)
-            except Exception as e:
-                print(f"年 {year} のスプレッドシート取得エラー: {e}")
 
-        df_daily_report_dic = {}
-        for date in month_list:
-            year = date[:4]
-            month = date.split('_')[1]
-            # キャッシュからスプレッドシートを取得
-            ss = ss_dic.get(year)
-            if not ss:
-                continue  # その年のスプレッドシートが取得できていなければスキップ
+        df = self.get_df_from_ss()
+        if df.empty:
+            return {}
 
-            try:
-                sheet_title = date.replace('_', '/')
-                worksheet = ss.worksheet(sheet_title)
-                df = spreadsheet.get_df_from_worksheet(worksheet)
-                if "日付" in df.columns:
-                    df = df.set_index("日付")
-                    df = df[df.index.astype(str).str.strip() != ""]
-                df = df.replace(r'^\s*$', np.nan, regex=True)
-                if year not in df_daily_report_dic:
-                    df_daily_report_dic[year] = {}
-                df_daily_report_dic[year][month] = df
-            except Exception as e:
-                print(f"エラーが発生しました: {e}")
-        
+        df_daily_report_dic: dict[str, dict[str, pd.DataFrame]] = {}
+
+        for ym in month_list:
+            year_str, month_str = ym.split("_")
+            y = int(year_str)
+            m = int(month_str)
+
+            # 年のキーがなければ用意
+            df_daily_report_dic.setdefault(year_str, {})
+
+            # DatetimeIndex を使ってフィルタ
+            mask = (df.index.year == y) & (df.index.month == m)
+            sub_df = df.loc[mask]
+
+            df_daily_report_dic[year_str][month_str] = sub_df
+
         return df_daily_report_dic
+    
 
     def get_all_daily_report_dic(self) -> dict:
         """
@@ -321,3 +329,45 @@ class DailyReportAnalysisUtils:
     #     # print(df_weekday_dic)
     #     return df_weekday_dic
 
+        
+    # def set_all_daily_report_dic(self) -> dict:
+    #     spreadsheet = SpreadSheets.SpreadSheets()
+    #     month_list = self.get_month_list()
+    #     # 利用する年のリストを先に取得する
+    #     years = set(date[:4] for date in month_list)
+    #     # 各年ごとにスプレッドシートオブジェクトをキャッシュする辞書
+    #     ss_dic = {}
+    #     for year in years:
+    #         try:
+    #             sheet_id = spreadsheet.get_spreadsheet_id_by_name(
+    #                 folder_id="1zPbemG8PafxBNUAmsIkqTNM_4RSBh3lZ",
+    #                 spreadsheet_name=f"新店舗_日報_{year}"
+    #             )
+    #             ss_dic[year] = spreadsheet.get_spreadsheet_by_id(sheet_id)
+    #         except Exception as e:
+    #             print(f"年 {year} のスプレッドシート取得エラー: {e}")
+
+    #     df_daily_report_dic = {}
+    #     for date in month_list:
+    #         year = date[:4]
+    #         month = date.split('_')[1]
+    #         # キャッシュからスプレッドシートを取得
+    #         ss = ss_dic.get(year)
+    #         if not ss:
+    #             continue  # その年のスプレッドシートが取得できていなければスキップ
+
+    #         try:
+    #             sheet_title = date.replace('_', '/')
+    #             worksheet = ss.worksheet(sheet_title)
+    #             df = spreadsheet.get_df_from_worksheet(worksheet)
+    #             if "日付" in df.columns:
+    #                 df = df.set_index("日付")
+    #                 df = df[df.index.astype(str).str.strip() != ""]
+    #             df = df.replace(r'^\s*$', np.nan, regex=True)
+    #             if year not in df_daily_report_dic:
+    #                 df_daily_report_dic[year] = {}
+    #             df_daily_report_dic[year][month] = df
+    #         except Exception as e:
+    #             print(f"エラーが発生しました: {e}")
+        
+    #     return df_daily_report_dic
