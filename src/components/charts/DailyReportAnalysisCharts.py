@@ -2,6 +2,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FuncFormatter
 import numpy as np
+import plotly.graph_objects as go
 
 '''
 グラフ生成用の関数を定義するファイル
@@ -133,32 +134,66 @@ class DailyReportAnalysisCharts:
         plt.grid(axis='y', zorder=0)
         st.pyplot(fig)
 
-    def weekly_comparison_bar(
-            self,
-            df1,
-            df2,
-            str1: str,
-            date1: str,
-            date2: str
-    ):
-        fig, ax =  plt.subplots(figsize=(20, 12))
-        plt.bar(np.arange(0,len(df1.index),1),df1[str1],align="edge",color="#46bdc6",label=str1,width=0.1)
-        plt.bar(np.arange(0.2,len(df2.index),1),df2[str1],align="edge",color="#ff6d01",label=str1,width=0.1)
-        plt.legend([date1[:4]+'年'+date1[5:]+'月',date2[:4]+'年'+date2[5:]+'月'],loc="upper left",fontsize=18)
-        if "売上" in str1 or "客単価" in str1:
-            plt.gca().yaxis.set_major_formatter(FuncFormatter(self.currency_formatter))
-            # if "売上" in str1:
-            #     plt.axhline(y=200000, xmin=0, xmax=6)
-            # else:
-            #     plt.axhline(y=2000, xmin=0, xmax=6)
-            plt.ylabel("月の総売上(円)",fontsize = 15)
-        elif "客数" in str1:
-            plt.ylabel("月の総客数(人)",fontsize = 15)
-            # plt.axhline(y=100, xmin=0, xmax=6)
-            plt.gca().yaxis.set_major_formatter(FuncFormatter(self.customer_formatter))
 
-        plt.xticks(np.arange(0.15,len(df1),1),df1.index.tolist(),fontsize = 15)
-        plt.yticks(fontsize = 15)
-        plt.axvline (x=len(df1.index)/2-0.35,color='black',linestyle='--')
-        plt.grid(axis='y')
-        st.pyplot(fig)
+    def weekly_comparison_bar(self, df1, df2, str1: str, date1: str, date2: str):
+        # グラフの作成
+        fig = go.Figure()
+
+        # df1 用の棒グラフ (色: #46bdc6)
+        fig.add_trace(go.Bar(
+            x=df1.index,
+            y=df1[str1],
+            name=f"{date1[:4]}年{date1[5:]}月",  # 月のラベル
+            marker_color="#46bdc6",
+            width=0.1,
+            offsetgroup=1  # バーをグループ化
+        ))
+
+        # df2 用の棒グラフ (色: #ff6d01)
+        fig.add_trace(go.Bar(
+            x=df2.index,
+            y=df2[str1],
+            name=f"{date2[:4]}年{date2[5:]}月",  # 月のラベル
+            marker_color="#ff6d01",
+            width=0.1,
+            offsetgroup=2  # バーをグループ化
+        ))
+
+        # "売上" や "客単価" の場合は通貨フォーマット
+        if "売上" in str1 or "客単価" in str1:
+            fig.update_layout(
+                yaxis_tickformat="¥",  # 通貨のフォーマット
+                yaxis_title="月の総売上(円)",
+            )
+        # "客数" の場合は人数フォーマット
+        elif "客数" in str1:
+            fig.update_layout(
+                yaxis_title="月の総客数(人)",
+            )
+
+        # x軸の設定 (日付ラベル、回転角度、フォントサイズ)
+        fig.update_layout(
+            xaxis=dict(
+                tickvals=np.arange(0, len(df1.index), 1),
+                ticktext=df1.index.tolist(),
+                tickfont=dict(size=15),
+            ),
+            yaxis=dict(
+                tickfont=dict(size=15),
+            ),
+            title=f'{date1}と{date2}の{str1}の曜日別比較',
+            barmode='group',  # バーをグループ化
+            showlegend=True,
+            legend=dict(
+                title="月",
+                font=dict(size=18),
+                x=0.01,
+                y=0.99
+            ),
+            xaxis_title="日付",
+            margin=dict(l=40, r=40, t=40, b=80),  # ラベルが切れないようにマージンを調整
+            plot_bgcolor='white',
+        )
+
+        # Streamlit でグラフを表示
+        st.plotly_chart(fig, use_container_width=True)

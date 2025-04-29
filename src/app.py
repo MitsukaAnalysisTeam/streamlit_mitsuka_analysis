@@ -4,61 +4,53 @@ import os
 
 # プロジェクトのルートディレクトリをモジュール検索パスに追加
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-# 各ページモジュールをインポート
-from components.pages import home
-from components.pages import analytics
+from components.pages import home, analytics
 
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(["ホーム", 
-                                                         "日報分析",
-                                                         "時間別分析", 
-                                                         "月別分析",
-                                                         "曜日別分析",
-                                                         "夜ラーメン",
-                                                         "昼ラーメン",
-                                                         "アルコール"])
+# サイドバーにページ選択メニューを作成
+st.sidebar.title("ナビゲーション")
+page = st.sidebar.radio(
+    label="ページを選択",
+    options=[
+        "ホーム",
+        "日報分析",
+        "時間別分析",
+        "月別分析",
+        "曜日別分析",
+        "夜ラーメン",
+        "ランチ分析",
+        "アルコール"
+    ]
+)
 
-with tab1:
+# 選択に応じて該当ページを表示
+if page == "ホーム":
     st.title("みつか坊主 - ホーム")
     home.show()
 
-
-with tab2:
+elif page == "日報分析":
     st.title("みつか坊主 - 日別分析")
     analytics.daily_report_analysis()
 
-with tab3:
+elif page == "時間別分析":
     st.title("みつか坊主 - 時間別分析")
     analytics.hourly_report_analysis()
 
-with tab4:
+elif page == "月別分析":
     st.title("みつか坊主 - 月別分析")
     analytics.monthly_report_analysis()
 
-with tab5:
+elif page == "曜日別分析":
     st.title("みつか坊主 - 曜日別分析")
     analytics.weekly_report_analysis()
 
-with tab6:
-    '''
-    未実装
-    '''
-
+elif page == "夜ラーメン":
     st.title("みつか坊主 - 夜ラーメン")
     analytics.night_ramen_analysis()
-    
-with tab7:
-    '''
-    未実装
-    '''
 
-    st.title("みつか坊主 - 昼ラーメン")
+elif page == "ランチ分析":
+    st.title("みつか坊主 - ランチ")
     analytics.lunch_ramen_analysis()
 
-
-with tab8:
-    '''
-    未実装
-    '''
-
+elif page == "アルコール":
     st.title("みつか坊主 - アルコール")
     analytics.alchohol_analysis()
