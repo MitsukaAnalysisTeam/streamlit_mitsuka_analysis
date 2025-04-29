@@ -17,7 +17,7 @@ page = st.sidebar.radio(
         "月別分析",
         "曜日別分析",
         "夜ラーメン",
-        "昼ラーメン",
+        "ランチ分析",
         "アルコール"
     ]
 )
@@ -47,8 +47,8 @@ elif page == "夜ラーメン":
     st.title("みつか坊主 - 夜ラーメン")
     analytics.night_ramen_analysis()
 
-elif page == "昼ラーメン":
-    st.title("みつか坊主 - 昼ラーメン")
+elif page == "ランチ分析":
+    st.title("みつか坊主 - ランチ")
     analytics.lunch_ramen_analysis()
 
 elif page == "アルコール":

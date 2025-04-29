@@ -227,6 +227,41 @@ class DailyReportAnalysisUtils:
         # print(df_weekday_dic)
         return df_weekday_dic
     
+
+    def weekly_get_left_and_right_diff(self, df_left: pd.DataFrame, df_right: pd.DataFrame, option: str):
+        df_diff_dic = {}
+        
+        # インデックスが一致することを確認
+        if not df_left.index.equals(df_right.index):
+            print("Warning: Indices do not match!")
+            # 共通インデックスを取得
+            common_index = df_left.index.intersection(df_right.index)
+            df_left = df_left.loc[common_index]
+            df_right = df_right.loc[common_index]
+        
+        for col in df_right.index:
+            # 左右の売上データを取得
+            left_value = df_left[option].get(col, 0)  # colがない場合は0を使う
+            right_value = df_right[option].get(col, 0)  # colがない場合は0を使う
+            
+            # 差分計算
+            if left_value != 0:
+                ratio = ((right_value - left_value) / left_value) * 100  # 増減の割合
+            else:
+                ratio = 0  # left_valueが0の場合は、差分が計算できないので0とする
+            
+            # 増減の表示文字列を決定
+            if ratio > 0:
+                change = f"{round(ratio, 2)}%"
+            elif ratio < 0:
+                change = f"-{round(abs(ratio), 2)}%"
+            else:
+                change = "No change"
+            
+            df_diff_dic[col] = change
+        return df_diff_dic
+
+
     def get_df_from_dic(self, date: str):
         # 年と月を取得
         year = date[:4]
