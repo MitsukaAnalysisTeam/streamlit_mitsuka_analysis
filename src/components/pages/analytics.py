@@ -88,22 +88,90 @@ def hourly_report_analysis():
     selected_month = st.selectbox("表示したい年月を選択", month_list[::-1])
     try:
         option_daily = st.selectbox("↓↓↓売上か客数を選択↓↓↓", ["客数","売上"])
+        # 曜日選択をマルチセレクトボックスに変更
+        days = ["水", "木", "金", "土", "日"]
+        day_options = ["全体"] + days
+        selected_days = st.selectbox("表示したい曜日を選択", day_options)
+        
+        
         # グラフ表示
-        st.write(f'{selected_month}の時間別の{option_daily}データ')
+        st.write(f'{selected_month}の時間別の{option_daily}データ({selected_days})')
         if option_daily == "売上":
             file_path = hourlyReportAnalysisUtils.get_sales_file_path_by_date(selected_month)
             data = pd.read_csv(file_path,index_col=0)
             data = hourlyReportAnalysisUtils.convert_hourly_report_data(data)
             data = hourlyReportAnalysisUtils.get_week_groupby_mean(data)
             
-            hourlyReportAnalysisCharts.week_comp_bar(data, '売上額 (¥)')
+            # 曜日を渡すように修正
+            hourlyReportAnalysisCharts.week_comp_bar(data, '売上額 (¥)', selected_days)
         elif option_daily == "客数":
             file_path = hourlyReportAnalysisUtils.get_cus_file_path_by_date(selected_month)
             data = pd.read_csv(file_path,index_col=0)
             data = hourlyReportAnalysisUtils.convert_hourly_report_data(data)
             data = hourlyReportAnalysisUtils.get_week_groupby_mean(data)
 
-            hourlyReportAnalysisCharts.week_comp_bar(data, '客数 (人)')
+            # 曜日を渡すように修正
+            hourlyReportAnalysisCharts.week_comp_bar(data, '客数 (人)', selected_days)
+            
+        # 比較分析セクション
+        st.markdown("---")
+        st.subheader("データ比較")
+        
+        # 比較する対象（売上/客数）を選択
+        compare_option = st.selectbox("比較する対象", ["売上", "客数"], key="compare_option")
+        
+        # 2つのデータを比較するためのUI
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.write("**1つ目のデータ**")
+            first_month = st.selectbox("月を選択", month_list[::-1], key="first_month")
+            first_day = st.selectbox("曜日を選択", day_options, key="first_day_month")
+        
+        with col2:
+            st.write("**2つ目のデータ**")
+            second_month = st.selectbox("月を選択", month_list[::-1], key="second_month")
+            second_day = st.selectbox("曜日を選択", day_options, key="second_day_month")
+        
+        # データの取得 - 1つ目
+        if compare_option == "売上":
+            first_file_path = hourlyReportAnalysisUtils.get_sales_file_path_by_date(first_month)
+            label = '売上額 (¥)'
+        else:  # 客数
+            first_file_path = hourlyReportAnalysisUtils.get_cus_file_path_by_date(first_month)
+            label = '客数 (人)'
+        
+        # データの取得 - 2つ目
+        if compare_option == "売上":
+            second_file_path = hourlyReportAnalysisUtils.get_sales_file_path_by_date(second_month)
+        else:  # 客数
+            second_file_path = hourlyReportAnalysisUtils.get_cus_file_path_by_date(second_month)
+        
+        # データの処理と表示
+        if first_file_path and second_file_path:
+            first_data = pd.read_csv(first_file_path, index_col=0)
+            first_data = hourlyReportAnalysisUtils.convert_hourly_report_data(first_data)
+            first_data = hourlyReportAnalysisUtils.get_week_groupby_mean(first_data)
+            
+            second_data = pd.read_csv(second_file_path, index_col=0)
+            second_data = hourlyReportAnalysisUtils.convert_hourly_report_data(second_data)
+            second_data = hourlyReportAnalysisUtils.get_week_groupby_mean(second_data)
+            
+            # 比較グラフを表示
+            hourlyReportAnalysisCharts.compare_two_data(
+                first_data, second_data, 
+                label, 
+                f"{first_month} ({first_day})", 
+                f"{second_month} ({second_day})",
+                first_day if first_day != "全体" else None,
+                second_day if second_day != "全体" else None
+            )
+        else:
+            if not first_file_path:
+                st.warning(f"{first_month}のデータが見つかりません。")
+            if not second_file_path:
+                st.warning(f"{second_month}のデータが見つかりません。")
+            
     except Exception as e:
         st.error(f"エラーが発生しました: {e}")
 
