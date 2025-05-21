@@ -7,3 +7,5 @@ data/config/mitsuka-streamlit-9d15df827484.json
 .env
 
 __pycache__/
+**/__pycache__/
+*.py[cod]
