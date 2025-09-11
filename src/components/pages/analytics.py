@@ -277,10 +277,15 @@ def lunch_ramen_analysis():
     st.title("開発中...🐭")
     month_list = lunchAnalysisUtils.get_month_list()
     selected_month = st.selectbox("どの年月を表示しますか？", month_list[::-1])
+    df_val_num = getByProductDf.df_all_val
+    df_val_sale = getByProductDf.df_all_sale
 
     lunch_json = read_json_file(filepath='data/json/lunch.json')
-    df_all_dict = getByProductDf.json_to_df_dict(lunch_json)
-    df_ramen = lunchAnalysisUtils.prepare_ramen_df_num(df_all_dict)
+    df_val_num_dict = getByProductDf.json_to_df_dict(df_all=df_val_num
+                                                 ,json_dict=lunch_json)
+    df_val_sale_dict = getByProductDf.json_to_df_dict(df_all=df_val_sale
+                                                 ,json_dict=lunch_json)
+    df_ramen = lunchAnalysisUtils.prepare_ramen_df_num(df_val_num_dict)
 
     result_ramen = lunchAnalysisUtils.summarize_ramen_sales(df_ramen, selected_month)
     lunchAnalysisCharts.bar_ranking_df_by_month(result_ramen, selected_month, "ラーメンの合計販売数")

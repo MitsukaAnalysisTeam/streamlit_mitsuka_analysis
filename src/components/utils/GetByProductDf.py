@@ -6,21 +6,31 @@ japanize_matplotlib.japanize()
 
 class GetByProductDf:
     def __init__(self):
-        self.df_all = self.get_all_val_num()
-    
+        self.df_all_val = self.get_all_val_num()
+        self.df_all_sale = self.get_all_val_sale()
+
     def get_all_val_num(
             self
             ) -> pd.DataFrame: 
-        return self.get_df_from_ss("シート1")
+        return self.get_df_from_ss("シート1",folder_id="1PcE7B214T7bm-BaRqOlmH2WjI2WjI2PjyA88",spreadsheet_name="バリエーション別販売数_all")
+    
+
+    def get_all_val_sale(
+        self
+        ) -> pd.DataFrame: 
+        return self.get_df_from_ss("シート1",folder_id="1PcE7B214T7bm-BaRqOlmH2WjI2WjI2PjyA88",spreadsheet_name="バリエーション別売上_all")
+
 
     def get_df_from_ss(self,
-                       sheet_name:str
+                       sheet_name:str,
+                       folder_id: str,
+                       spreadsheet_name: str
                        ) -> pd.DataFrame:
         try:
             spreadsheet = SpreadSheets.SpreadSheets()
             ss_id = spreadsheet.get_spreadsheet_id_by_name(
-                folder_id="1PcE7B214T7bm-BaRqOlmH2WjI2PjyA88",
-                spreadsheet_name="バリエーション別販売数_all"
+                folder_id=folder_id,
+                spreadsheet_name=spreadsheet_name
             )
             ss = spreadsheet.get_spreadsheet_by_id(ss_id)
             worksheet = ss.worksheet(sheet_name)
@@ -39,6 +49,7 @@ class GetByProductDf:
             return pd.DataFrame()
 
     def json_to_df_dict(self, 
+                 df_all: pd.DataFrame,
                  json_dict: dict
                  ) -> dict:
         '''
@@ -46,6 +57,7 @@ class GetByProductDf:
         '''
         df_dict = {}
         for key, value in json_dict.items():
-            df_dict[key] = self.df_all[value].fillna(0).astype(int)
+            df_dict[key] = df_all[value].fillna(0).astype(int)
+        print(df_dict)
         return df_dict
         
