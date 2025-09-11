@@ -11,6 +11,8 @@ from src.components.utils.DailyReportAnalysisUtils import DailyReportAnalysisUti
 from src.components.utils.HourlyReportAnalysisUtils import HourlyReportAnalysisUtils
 from src.components.utils.LunchAnalysisUtils import LunchAnalysisUtils
 from src.components.charts.LunchAnalysisCharts import LunchAnalysisCharts
+from src.components.utils.GetByProductDf import GetByProductDf
+from src.components.utils.Json import read_json_file
 
 """
 インスタンス化は一回だけにする
@@ -40,6 +42,10 @@ def get_lunch_analysis_utils() -> LunchAnalysisUtils:
 def get_lunch_analysis_charts() -> LunchAnalysisCharts:
     return LunchAnalysisCharts()
 
+@st.cache_resource
+def get_by_product_df() -> GetByProductDf:
+    return GetByProductDf()
+
 # ここでキャッシュされたインスタンスをグローバル変数に格納（実際の関数内でも取得可能）
 dailyReportAnalysisUtils = get_daily_report_analysis_utils()
 dailyReportAnalysisCharts = get_daily_report_analysis_charts()
@@ -47,7 +53,7 @@ hourlyReportAnalysisUtils = get_hourly_report_analysis_utils()
 hourlyReportAnalysisCharts = get_hourly_report_analysis_charts()
 lunchAnalysisUtils = get_lunch_analysis_utils()
 lunchAnalysisCharts = get_lunch_analysis_charts()
-
+getByProductDf = get_by_product_df()
 
 def show():
     daily_report_analysis()
@@ -272,14 +278,13 @@ def lunch_ramen_analysis():
     month_list = lunchAnalysisUtils.get_month_list()
     selected_month = st.selectbox("どの年月を表示しますか？", month_list[::-1])
 
-    df_ramen = lunchAnalysisUtils.df_ramen
-    df_all = lunchAnalysisUtils.df_all
+    lunch_json = read_json_file(filepath='data/json/lunch.json')
+    df_all_dict = getByProductDf.json_to_df_dict(lunch_json)
+    df_ramen = lunchAnalysisUtils.prepare_ramen_df_num(df_all_dict)
 
     result_ramen = lunchAnalysisUtils.summarize_ramen_sales(df_ramen, selected_month)
-    lunchAnalysisCharts.bar_ranking_df(result_ramen, selected_month, "ラーメンの合計販売数")
-
-    result_all = lunchAnalysisUtils.summarize_ramen_sales(df_all, selected_month)
-    lunchAnalysisCharts.bar_ranking_df(result_all, selected_month, "ランチ全商品の合計販売数")
+    lunchAnalysisCharts.bar_ranking_df_by_month(result_ramen, selected_month, "ラーメンの合計販売数")
+    lunchAnalysisCharts.line_trend_df(df_ramen, "ラーメンの販売数推移")
 
 def alchohol_analysis():
     '''
