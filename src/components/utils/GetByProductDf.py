@@ -12,13 +12,13 @@ class GetByProductDf:
     def get_all_val_num(
             self
             ) -> pd.DataFrame: 
-        return self.get_df_from_ss("シート1",folder_id="1PcE7B214T7bm-BaRqOlmH2WjI2WjI2PjyA88",spreadsheet_name="バリエーション別販売数_all")
+        return self.get_df_from_ss(sheet_name="シート1",folder_id="1PcE7B214T7bm-BaRqOlmH2WjI2PjyA88",spreadsheet_name="バリエーション別販売数_all")
     
 
     def get_all_val_sale(
         self
         ) -> pd.DataFrame: 
-        return self.get_df_from_ss("シート1",folder_id="1PcE7B214T7bm-BaRqOlmH2WjI2WjI2PjyA88",spreadsheet_name="バリエーション別売上_all")
+        return self.get_df_from_ss(sheet_name="シート1",folder_id="1PcE7B214T7bm-BaRqOlmH2WjI2PjyA88",spreadsheet_name="バリエーション別売上_all")
 
 
     def get_df_from_ss(self,
