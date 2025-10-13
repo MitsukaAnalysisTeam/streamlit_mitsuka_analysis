@@ -8,7 +8,7 @@ class LunchAnalysisCharts:
         pass
 
 
-    def bar_ranking_df(
+    def bar_ranking_df_by_month(
             self,
             df: pd.DataFrame,
             date: str,
@@ -47,6 +47,31 @@ class LunchAnalysisCharts:
         fig.update_layout(
             xaxis=dict(title=''),
             xaxis_tickangle=-45,
+            margin=dict(l=20, r=20, t=40, b=80)
+        )
+
+        st.plotly_chart(fig, use_container_width=True)
+
+    def line_trend_df(
+            self,
+            df: pd.DataFrame,
+            fig_title: str
+            ):
+        """
+        指定されたデータフレームの各商品の販売数の推移をStreamlitで可視化する関数（Plotly版）
+        - df: データフレーム (インデックスが日付)
+        """
+        # plotlyでグラフ作成
+        fig = px.line(
+            df,
+            x=df.index,
+            y=df.columns,
+            labels={"x": "日付", "value": "販売数", "variable": "商品"},
+            title=f"{fig_title} の販売数推移"
+        )
+
+        fig.update_layout(
+            xaxis=dict(title=''),
             margin=dict(l=20, r=20, t=40, b=80)
         )
 

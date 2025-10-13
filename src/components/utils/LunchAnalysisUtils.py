@@ -3,61 +3,13 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, date, timedelta
 from dateutil.relativedelta import relativedelta
-import jpholiday
 import japanize_matplotlib
-import os
-import re 
-import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import streamlit as st
-import json
 import src.components.utils.SpreadSheets as SpreadSheets
 japanize_matplotlib.japanize()
 
-# Drive 1PDYD1wvqKwsW42Q09VF8JkdldUop0r4R
-#  SS 1qCbwxMXHyG3ZcqLqTlxi-MyKffIYiDoTT04KMSQhvSI
 class LunchAnalysisUtils:
-    def __init__(self):
-        self.df_ramen = self.get_lunch_file_ramen()
-        self.df_all = self.get_lunch_file_all()
-
-    def get_lunch_file_ramen(
-            self
-            ) -> pd.DataFrame: 
-        return self.get_df_from_ss("ラーメン")
-    
-    def get_lunch_file_all(
-            self
-            ) -> pd.DataFrame: 
-        return self.get_df_from_ss("df_num_all")
-    
-
-    def get_df_from_ss(self,
-                       sheet_name:str
-                       ) -> pd.DataFrame:
-        try:
-            spreadsheet = SpreadSheets.SpreadSheets()
-            ss_id = spreadsheet.get_spreadsheet_id_by_name(
-                folder_id="1PDYD1wvqKwsW42Q09VF8JkdldUop0r4R",
-                spreadsheet_name="ランチ分析"
-            )
-            ss = spreadsheet.get_spreadsheet_by_id(ss_id)
-            worksheet = ss.worksheet(sheet_name)
-            df = spreadsheet.get_df_from_worksheet(worksheet)
-
-            if "日付" in df.columns:
-                # フォーマット指定を外して自動判別に任せる
-                df["日付"] = pd.to_datetime(df["日付"], errors="coerce")
-                df = df.dropna(subset=["日付"])   # 変換失敗行を除去
-                df = df.set_index("日付")
-            df = df.replace(r"^\s*$", np.nan, regex=True)
-            # print(df)
-            return df
-        except Exception as e:
-            print(f"get_df_from_ss でエラー: {e}")
-            return pd.DataFrame()
-        
-
     def summarize_ramen_sales(self, df: pd.DataFrame, date: str) -> pd.Series:
         """
         指定した年と月の各商品の合計販売数を表示する関数
@@ -98,5 +50,44 @@ class LunchAnalysisUtils:
             return month_list
 
         month_list = generate_month_list(2022, 10, current_year, current_month)
-        # print(month_list)
         return month_list
+    
+    def prepare_ramen_df_num(self, df_dict: dict) -> pd.DataFrame:
+        """
+        カテゴリ別に集計済みのDataFrame辞書から、日々の売上合計を算出して
+        一つのDataFrameにまとめる関数。
+        """
+        ramen_keys = self.__get_ramen_list()
+        
+        ramen_series_list = []
+        for key in ramen_keys:
+            if key in df_dict:
+                series_sum = df_dict[key].sum(axis=1).rename(key)
+                ramen_series_list.append(series_sum)
+            else:
+                # データがないカテゴリについては警告を出す（任意）
+                print(f"Warning: Category '{key}' not found in df_dict")
+
+        # データが一つもなかった場合は、空のDataFrameを返す
+        if not ramen_series_list:
+            return pd.DataFrame()
+
+        # リストに格納したすべてのSeriesを一度に連結する
+        ramen_df = pd.concat(ramen_series_list, axis=1)
+        
+        # NaN（対象の日に売上がなかった商品など）を0で埋める
+        ramen_df = ramen_df.fillna(0)
+
+        return ramen_df
+
+    
+    def __get_ramen_list(self):
+        ramen_list = [
+            "カリー",
+            "カリーつけ麺",
+            "海老みそ",
+            "焦がし海老味噌",
+            "ベジ味噌",
+            "白味噌",
+        ]
+        return ramen_list
