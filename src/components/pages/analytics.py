@@ -11,8 +11,6 @@ from src.components.utils.DailyReportAnalysisUtils import DailyReportAnalysisUti
 from src.components.utils.HourlyReportAnalysisUtils import HourlyReportAnalysisUtils
 from src.components.utils.LunchAnalysisUtils import LunchAnalysisUtils
 from src.components.charts.LunchAnalysisCharts import LunchAnalysisCharts
-from src.components.utils.AlcoholAnalysisUtils import AlcoholAnalysisUtils
-from src.components.charts.AlcoholAnalysisCharts import AlcoholAnalysisCharts
 from src.components.utils.GetByProductDf import GetByProductDf
 from src.components.utils.Json import read_json_file
 
@@ -45,12 +43,6 @@ def get_lunch_analysis_charts() -> LunchAnalysisCharts:
     return LunchAnalysisCharts()
 
 @st.cache_resource
-def get_alcohol_analysis_utils() -> AlcoholAnalysisUtils:
-    return AlcoholAnalysisUtils()
-
-@st.cache_resource
-def get_alcohol_analysis_charts() -> AlcoholAnalysisCharts:
-    return AlcoholAnalysisCharts()
 def get_by_product_df() -> GetByProductDf:
     return GetByProductDf()
 
@@ -61,9 +53,6 @@ hourlyReportAnalysisUtils = get_hourly_report_analysis_utils()
 hourlyReportAnalysisCharts = get_hourly_report_analysis_charts()
 lunchAnalysisUtils = get_lunch_analysis_utils()
 lunchAnalysisCharts = get_lunch_analysis_charts()
-alcoholAnalysisUtils = get_alcohol_analysis_utils()
-alcoholAnalysisCharts = get_alcohol_analysis_charts()
-
 getByProductDf = get_by_product_df()
 
 def show():
@@ -306,43 +295,4 @@ def alchohol_analysis():
     '''
     アルコール分析のグラフ
     '''
-    try:
-        # アルコールの種類を選択
-        option_alcohol = st.selectbox("アルコールの種類", ["アルコール合計","ビール","秋鹿","若尾ワイン"])
-        option_daily = st.selectbox("平均杯数・合計売上", ["平均杯数","合計売上"])
-        # グラフ表示
-        st.write(f'月単位の{option_alcohol}データ')
-        if option_alcohol == "アルコール合計":
-            if option_daily == "平均杯数":
-                data = alcoholAnalysisUtils.get_alchol_data("volumes")
-                alcoholAnalysisCharts.alchol_graph(data)
-            else: #
-                data = alcoholAnalysisUtils.get_alchol_data("sales")
-                alcoholAnalysisCharts.alchol_graph(data)
-        elif option_alcohol == "ビール":
-            if option_daily == "平均杯数":
-                data = alcoholAnalysisUtils.get_beer_data("volumes")
-                alcoholAnalysisCharts.beer_graph(data)
-            else:
-                data = alcoholAnalysisUtils.get_beer_data("sales")
-                alcoholAnalysisCharts.beer_graph(data)
-        elif option_alcohol == "秋鹿":
-            if option_daily == "平均杯数":
-                #データの読み込み
-                data = alcoholAnalysisUtils.get_akishika_data("volumes")
-                alcoholAnalysisCharts.akishika_graph(data)
-            else:
-                # データの読み込み
-                data = alcoholAnalysisUtils.get_akishika_data("sales")
-                alcoholAnalysisCharts.akishika_graph(data)
-        else: # 若尾ワイン
-            if option_daily == "平均杯数":
-                # データの読み込み
-                data = alcoholAnalysisUtils.get_wine_data("volumes")
-                alcoholAnalysisCharts.wine_graph(data)
-            else:
-                # データの読み込み
-                data = alcoholAnalysisUtils.get_wine_data("sales")
-                alcoholAnalysisCharts.wine_graph(data)
-    except Exception as e:
-        st.error(f"エラーが発生しました: {e}")
+    st.title("開発中...🐭")
