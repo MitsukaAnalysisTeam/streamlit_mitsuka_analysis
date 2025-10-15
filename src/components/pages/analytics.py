@@ -51,8 +51,6 @@ def get_alcohol_analysis_utils() -> AlcoholAnalysisUtils:
 @st.cache_resource
 def get_alcohol_analysis_charts() -> AlcoholAnalysisCharts:
     return AlcoholAnalysisCharts()
-
-@st.cache_resource
 def get_by_product_df() -> GetByProductDf:
     return GetByProductDf()
 
@@ -67,6 +65,7 @@ alcoholAnalysisUtils = get_alcohol_analysis_utils()
 alcoholAnalysisCharts = get_alcohol_analysis_charts()
 getByProductDf = get_by_product_df()
 
+getByProductDf = get_by_product_df()
 
 def show():
     daily_report_analysis()
