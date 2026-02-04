@@ -30,17 +30,18 @@ class AlcoholAnalysisCharts:
         data["日付"] = pd.to_datetime(data["日付"], format='mixed')
         data.set_index("日付", inplace=True)
 
-        monthly_sum = data.resample('M')[["秋鹿", "ハイボール", "りんごカクテル", "りんごと熱燗", "梅酒"]].sum()
+        monthly_sum = data.resample('M')[["秋鹿", "ハイボール", "りんごカクテル", "りんごと熱燗", "梅酒", "敷島"]].sum()
 
-        business_days = data.resample('M')[["秋鹿", "ハイボール", "りんごカクテル", "りんごと熱燗", "梅酒"]].count()
+        business_days = data.resample('M')[["秋鹿", "ハイボール", "りんごカクテル", "りんごと熱燗", "梅酒", "敷島"]].count()
         monthly_avg = monthly_sum / business_days
 
         monthly_avg.index = monthly_avg.index.to_series().dt.strftime('%Y_%m')
 
         fig, ax = plt.subplots(figsize=(12, 6))
-        monthly_avg.plot(kind='bar', stacked=True, ax=ax, color=["orange", "gold", "darkblue", "tomato", "limegreen"])
+        monthly_avg.plot(kind='bar', stacked=True, ax=ax, color=["orange", "gold", "darkblue", "tomato", "limegreen", "purple"])
 
-        ax.set_title("月毎の1日合計売上の推移", fontsize=18)
+
+        ax.set_title("月毎の1日合計売上・客数の推移", fontsize=18)
         ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0,), borderaxespad=0)
         plt.xticks(rotation=45)
 
