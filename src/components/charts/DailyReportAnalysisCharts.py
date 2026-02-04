@@ -89,8 +89,8 @@ class DailyReportAnalysisCharts:
         sum_colors = ['#46bdc6']*(len(x_labels)-1)+['#ff6d01']
         plt.bar(x_labels,sum,color=sum_colors,width=0.5)
         plt.ticklabel_format(style='plain',axis='y')
-        plt.xticks(rotation=-90, fontsize=40)
-        plt.yticks(fontsize = 40)
+        plt.xticks(rotation=-90, fontsize=30)
+        plt.yticks(fontsize = 25)
         if "売上" in str1 or "客単価" in str1 :
             plt.gca().yaxis.set_major_formatter(FuncFormatter(self.currency_formatter))
             plt.ylabel("月の総売上(円)", fontsize=40)
@@ -122,8 +122,8 @@ class DailyReportAnalysisCharts:
         mean_colors = ['#46bdc6']*(len(x_labels)-1)+['#ff6d01']
         plt.bar(x_labels,mean,color=mean_colors,width=0.5)
         plt.ticklabel_format(style='plain',axis='y')
-        plt.xticks(rotation=-90, fontsize=40)
-        plt.yticks(fontsize = 40)
+        plt.xticks(rotation=-90, fontsize=30)
+        plt.yticks(fontsize = 25)
         if "売上" in str1 or "客単価" in str1:
             plt.gca().yaxis.set_major_formatter(FuncFormatter(self.currency_formatter))
             plt.ylabel("月の総売上(円)", fontsize=40)
