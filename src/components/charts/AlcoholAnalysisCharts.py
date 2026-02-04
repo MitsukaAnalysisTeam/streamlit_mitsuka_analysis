@@ -41,7 +41,7 @@ class AlcoholAnalysisCharts:
         monthly_avg.plot(kind='bar', stacked=True, ax=ax, color=["orange", "gold", "darkblue", "tomato", "limegreen", "purple"])
 
 
-        ax.set_title("月毎の1日合計売上・客数の推移", fontsize=18)
+        ax.set_title("月毎の1日合計売上・杯数の推移", fontsize=18)
         ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1.0,), borderaxespad=0)
         plt.xticks(rotation=45)
 
