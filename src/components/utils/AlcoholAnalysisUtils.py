@@ -97,6 +97,7 @@ class AlcoholAnalysisUtils:
             "ハイボール",
             "りんごカクテル",
             "りんごと熱燗",
-            "梅酒"
+            "梅酒",
+            "敷島"
         ]
         return alcohol_list
