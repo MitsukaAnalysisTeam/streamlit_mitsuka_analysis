@@ -17,7 +17,7 @@ class AlcoholAnalysisUtils:
             df: pd.DataFrame
             )-> pd.DataFrame: 
         
-        df = df[["日付", "秋鹿", "ハイボール", "りんごカクテル", "りんごと熱燗", "梅酒"]]
+        df = df[["日付", "秋鹿", "ハイボール", "りんごカクテル", "りんごと熱燗", "梅酒", "敷島"]]
         return df
 
     def get_beer_data(
