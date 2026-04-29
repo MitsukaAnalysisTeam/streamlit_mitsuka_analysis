@@ -234,6 +234,21 @@ def yearly_report_analysis():
         st.warning("年間分析に利用できるデータがありません。")
         return
 
+    latest_year = yearly_df.index[-1]
+    latest_months = []
+    for month_key, month_df in dailyReportAnalysisUtils.df_dic.get(latest_year, {}).items():
+        if month_df is None or month_df.empty:
+            continue
+        try:
+            latest_months.append(int(month_key))
+        except (TypeError, ValueError):
+            continue
+    if latest_months:
+        latest_month = max(latest_months)
+        st.caption(f"最新年データ範囲: {latest_year}年{latest_month}月まで（集計対象）")
+    else:
+        st.caption(f"最新年データ範囲: {latest_year}年（月データの確認不可）")
+
     st.write("#### 合計客数")
     yearlyReportAnalysisCharts.plot_yearly_bar(
         yearly_df, "合計客数", "年の合計客数 (人)", people=True
