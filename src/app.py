@@ -18,7 +18,8 @@ page = st.sidebar.radio(
         "曜日別分析",
         "夜ラーメン",
         "ランチ分析",
-        "アルコール"
+        "アルコール",
+        "年間分析"
     ]
 )
 
@@ -38,6 +39,10 @@ elif page == "時間別分析":
 elif page == "月別分析":
     st.title("みつか坊主 - 月別分析")
     analytics.monthly_report_analysis()
+
+elif page == "年間分析":
+    st.title("みつか坊主 - 年間分析")
+    analytics.yearly_report_analysis()
 
 elif page == "曜日別分析":
     st.title("みつか坊主 - 曜日別分析")
