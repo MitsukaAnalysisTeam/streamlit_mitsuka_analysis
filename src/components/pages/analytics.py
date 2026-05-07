@@ -17,6 +17,8 @@ from src.components.charts.RamenAnalysisCharts import RamenAnalysisCharts
 from src.components.utils.AlcoholAnalysisUtils import AlcoholAnalysisUtils
 from src.components.charts.AlcoholAnalysisCharts import AlcoholAnalysisCharts
 from src.components.utils.GetByProductDf import GetByProductDf
+from src.components.utils.YearlyReportAnalysisUtils import YearlyReportAnalysisUtils
+from src.components.charts.YearlyReportAnalysisCharts import YearlyReportAnalysisCharts
 from src.components.utils.Json import read_json_file
 
 """
@@ -77,6 +79,14 @@ def get_alcohol_analysis_charts() -> AlcoholAnalysisCharts:
 def get_by_product_df() -> GetByProductDf:
     return GetByProductDf()
 
+@st.cache_resource
+def get_yearly_report_analysis_utils() -> YearlyReportAnalysisUtils:
+    return YearlyReportAnalysisUtils()
+
+@st.cache_resource
+def get_yearly_report_analysis_charts() -> YearlyReportAnalysisCharts:
+    return YearlyReportAnalysisCharts()
+
 # ここでキャッシュされたインスタンスをグローバル変数に格納（実際の関数内でも取得可能）
 dailyReportAnalysisUtils = get_daily_report_analysis_utils()
 dailyReportAnalysisCharts = get_daily_report_analysis_charts()
@@ -92,6 +102,8 @@ ramenAnalysisCharts = get_ramen_analysis_charts()
 alcoholAnalysisUtils = get_alcohol_analysis_utils()
 alcoholAnalysisCharts = get_alcohol_analysis_charts()
 getByProductDf = get_by_product_df()
+yearlyReportAnalysisUtils = get_yearly_report_analysis_utils()
+yearlyReportAnalysisCharts = get_yearly_report_analysis_charts()
 
 
 def show():
@@ -225,6 +237,55 @@ def monthly_report_analysis():
     option_monthly_mean = st.selectbox("表示させる項目", df_dic["2022"]["10"].columns.tolist()[1:])
     dailyReportAnalysisCharts.monthly_transfer_mean_bar(df_dic=df_dic,
                                                    str1=option_monthly_mean)
+
+
+def yearly_report_analysis():
+    st.write("### 年間分析")
+    yearly_df = yearlyReportAnalysisUtils.build_yearly_summary(dailyReportAnalysisUtils.df_dic, start_year=2022)
+
+    if yearly_df.empty:
+        st.warning("年間分析に利用できるデータがありません。")
+        return
+
+    latest_year = yearly_df.index[-1]
+    latest_months = []
+    for month_key, month_df in dailyReportAnalysisUtils.df_dic.get(latest_year, {}).items():
+        if month_df is None or month_df.empty:
+            continue
+        try:
+            latest_months.append(int(month_key))
+        except (TypeError, ValueError):
+            continue
+    if latest_months:
+        latest_month = max(latest_months)
+        st.caption(f"最新年データ範囲: {latest_year}年{latest_month}月まで（集計対象）")
+    else:
+        st.caption(f"最新年データ範囲: {latest_year}年（月データの確認不可）")
+
+    st.write("#### 合計客数")
+    yearlyReportAnalysisCharts.plot_yearly_bar(
+        yearly_df, "合計客数", "年の合計客数 (人)", people=True
+    )
+
+    st.write("#### 合計売上")
+    yearlyReportAnalysisCharts.plot_yearly_bar(
+        yearly_df, "合計売上", "年の合計売上 (円)", currency=True
+    )
+
+    st.write("#### 平均客数")
+    yearlyReportAnalysisCharts.plot_yearly_bar(
+        yearly_df, "平均客数", "日次平均客数 (人)", people=True
+    )
+
+    st.write("#### 平均売上")
+    yearlyReportAnalysisCharts.plot_yearly_bar(
+        yearly_df, "平均売上", "日次平均売上 (円)", currency=True
+    )
+
+    st.write("#### 平均客単価")
+    yearlyReportAnalysisCharts.plot_yearly_bar(
+        yearly_df, "平均客単価", "日次平均客単価 (円)", currency=True
+    )
     
 def weekly_report_analysis():
     '''

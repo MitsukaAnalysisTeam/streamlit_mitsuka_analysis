@@ -1,6 +1,4 @@
 import streamlit as st
-import matplotlib.pyplot as plt
-from matplotlib.ticker import FuncFormatter
 import numpy as np
 import plotly.graph_objects as go
 
@@ -11,128 +9,231 @@ class DailyReportAnalysisCharts:
     '''
     日報分析クラス用の画像生成クラス
     '''
-    def currency_formatter(self, 
-                           x, 
-                           _):
-        return f'¥{int(x):,}'
-    
-    def customer_formatter(self, 
-                        x, 
-                        _):
-        return f'{int(x):,}人'
 
-    def lunch_night_stacked_bar(self, 
-                                df, 
-                                str1, 
-                                str2, 
-                                str3):
-        fig, ax = plt.subplots(figsize=(20, 12))
-        plt.bar(df.index, df[str1], align="center", color='darkorange', label=str1, width=0.5)
-        plt.bar(df.index, df[str2], bottom=df[str1], align="center", color='royalblue', label=str2, width=0.5)
-        plt.legend(loc="upper right", fontsize=10)
-        ax.set_axisbelow(True)
-        plt.xticks(rotation=90)
+    def _stacked_hover_suffix(self, str2: str) -> str:
         if '売上' in str2:
-            plt.yticks(np.arange(0, 370001, 25000),fontsize=15)
-            plt.ylim(0, 370000)
-            plt.axhline(y=200000, xmin=0, xmax=len(df.index), color='r')
-            plt.axhline(y=100000, xmin=0, xmax=len(df.index), color='black')
-            plt.gca().yaxis.set_major_formatter(FuncFormatter(self.currency_formatter))
+            return '¥%{y:,.0f}'
+        if '客数' in str2:
+            return '%{y:,.0f}人'
+        return '¥%{y:,.0f}'
+
+    def lunch_night_stacked_bar(self,
+                                df,
+                                str1,
+                                str2,
+                                str3):
+        x_vals = [str(i) for i in df.index]
+        ht_suffix = self._stacked_hover_suffix(str2)
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=x_vals,
+            y=df[str1].tolist(),
+            name=str1,
+            marker_color='darkorange',
+            hovertemplate=f'日: %{{x}}<br>{str1}: {ht_suffix}<extra></extra>',
+        ))
+        fig.add_trace(go.Bar(
+            x=x_vals,
+            y=df[str2].tolist(),
+            name=str2,
+            marker_color='royalblue',
+            hovertemplate=f'日: %{{x}}<br>{str2}: {ht_suffix}<extra></extra>',
+        ))
+
+        if '売上' in str2:
+            y_max = 370000
+            tick_vals = list(np.arange(0, 370001, 25000))
+            fig.add_hline(y=200000, line_color='red', line_width=1)
+            fig.add_hline(y=100000, line_color='black', line_width=1)
+            y_tickformat = ',.0f'
+            y_tickprefix = '¥'
         elif '客数' in str2:
-            plt.yticks(np.arange(0, 201, 20),fontsize=15)
-            plt.ylim(0, 200)
-            plt.axhline(y=100, xmin=0, xmax=len(df.index), color='r')
+            y_max = 200
+            tick_vals = list(np.arange(0, 201, 20))
+            fig.add_hline(y=100, line_color='red', line_width=1)
+            y_tickformat = ',.0f'
+            y_tickprefix = ''
         else:
-            plt.ylim(0, 3000)
-            plt.yticks(np.arange(0, 3001, 500),fontsize=15)
-            plt.axhline(y=2000, xmin=0, xmax=len(df.index), color='r')
-            plt.gca().yaxis.set_major_formatter(FuncFormatter(self.currency_formatter))
-        ax.set(ylabel=str3)
-        plt.xticks(np.arange(0, len(df), 1), df.index, rotation=28)
-        plt.grid(axis='y')
-        st.pyplot(fig)
+            y_max = 3000
+            tick_vals = list(np.arange(0, 3001, 500))
+            fig.add_hline(y=2000, line_color='red', line_width=1)
+            y_tickformat = ',.0f'
+            y_tickprefix = '¥'
+
+        fig.update_layout(
+            barmode='stack',
+            yaxis=dict(
+                title=str3,
+                range=[0, y_max],
+                tickmode='array',
+                tickvals=tick_vals,
+                tickformat=y_tickformat,
+                tickprefix=y_tickprefix,
+                showgrid=True,
+                gridcolor='#e0e0e0',
+            ),
+            xaxis=dict(
+                title='日',
+                tickangle=-28,
+                type='category',
+            ),
+            legend=dict(
+                orientation='h',
+                yanchor='bottom',
+                y=1.02,
+                xanchor='right',
+                x=1,
+            ),
+            hovermode='x unified',
+            plot_bgcolor='white',
+            margin=dict(l=40, r=20, t=60, b=80),
+            height=520,
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
     def daily_price_per_customer_bar(self,
                                      df
     ):
-        fig, ax = plt.subplots(figsize=(15, 3))
-        ax.set_axisbelow(True)
-        plt.bar(np.arange(0,len(df),1),df["1日客単価"],width=0.5
-                ,color="darkorange"
-                )
-        plt.ylim(0,3000)
-        plt.yticks(np.arange(0,3001,500))
-        plt.axhline (y=2000, xmin=0, xmax=len(df.index),color='r')
-        plt.gca().yaxis.set_major_formatter(FuncFormatter(self.currency_formatter))
-        plt.xticks(np.arange(0,len(df),1),df.index,rotation=28)
-        plt.grid(axis='y')        
-        st.pyplot(fig)
+        x_vals = [str(i) for i in df.index]
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=x_vals,
+            y=df["1日客単価"].tolist(),
+            name='1日客単価',
+            marker_color='darkorange',
+            hovertemplate='日: %{x}<br>客単価: ¥%{y:,.0f}<extra></extra>',
+        ))
+        fig.add_hline(y=2000, line_color='red', line_width=1)
+        fig.update_layout(
+            yaxis=dict(
+                title='客単価 (¥)',
+                range=[0, 3000],
+                tickmode='array',
+                tickvals=list(np.arange(0, 3001, 500)),
+                tickformat=',.0f',
+                tickprefix='¥',
+                showgrid=True,
+                gridcolor='#e0e0e0',
+            ),
+            xaxis=dict(
+                title='日',
+                tickangle=-28,
+                type='category',
+            ),
+            showlegend=True,
+            legend=dict(orientation='h', y=1.02, x=1, xanchor='right', yanchor='bottom'),
+            hovermode='x unified',
+            plot_bgcolor='white',
+            margin=dict(l=40, r=20, t=60, b=80),
+            height=360,
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
     def monthly_transfer_sum_bar(
             self,
             df_dic,
             str1
     ):
-        sum = []
+        sum_vals = []
         x_labels = []
-        fig, ax = plt.subplots(figsize=(20, 12))
-        ax.set_axisbelow(True)
-        # すべてのDataFrameにconvert_daily_report_dataを適用
         for year, months in df_dic.items():
             for month, df in months.items():
                 try:
-                    # DataFrameを変換
-                    sum.append(df_dic[year][month][str1].sum())
+                    sum_vals.append(df_dic[year][month][str1].sum())
                     x_labels.append(f"{year}/{month}({len(df_dic[year][month][str1])})")
                 except Exception as e:
                     print(f"エラーが発生しました: 年={year}, 月={month}, {e}")
-        sum_colors = ['#46bdc6']*(len(x_labels)-1)+['#ff6d01']
-        plt.bar(x_labels,sum,color=sum_colors,width=0.5)
-        plt.ticklabel_format(style='plain',axis='y')
-        plt.xticks(rotation=-90, fontsize=30)
-        plt.yticks(fontsize = 25)
-        if "売上" in str1 or "客単価" in str1 :
-            plt.gca().yaxis.set_major_formatter(FuncFormatter(self.currency_formatter))
-            plt.ylabel("月の総売上(円)", fontsize=40)
-        elif "客数" in str1:
-            plt.ylabel("月の総客数(人)", fontsize=40)
-            plt.gca().yaxis.set_major_formatter(FuncFormatter(self.customer_formatter))
-        plt.xlabel("年/月(営業日数)", fontsize=40)
-        plt.grid(axis='y', zorder=0)
-        st.pyplot(fig)
+        sum_colors = ['#46bdc6'] * (len(x_labels) - 1) + ['#ff6d01']
+
+        is_currency = "売上" in str1 or "客単価" in str1
+        if is_currency:
+            y_title = "月の総売上(円)"
+            hover_tmpl = '年月: %{x}<br>合計: ¥%{y:,.0f}<extra></extra>'
+            y_tickprefix = '¥'
+        else:
+            y_title = "月の総客数(人)"
+            hover_tmpl = '年月: %{x}<br>合計: %{y:,.0f}人<extra></extra>'
+            y_tickprefix = ''
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=x_labels,
+            y=sum_vals,
+            name=str1,
+            marker_color=sum_colors,
+            hovertemplate=hover_tmpl,
+        ))
+        fig.update_layout(
+            xaxis=dict(title="年/月(営業日数)", tickangle=-90, tickfont=dict(size=14)),
+            yaxis=dict(
+                title=y_title,
+                tickformat=',.0f',
+                tickprefix=y_tickprefix,
+                tickfont=dict(size=14),
+                showgrid=True,
+                gridcolor='#e0e0e0',
+            ),
+            showlegend=True,
+            legend=dict(orientation='h', y=1.02, x=1, xanchor='right', yanchor='bottom'),
+            hovermode='x unified',
+            plot_bgcolor='white',
+            margin=dict(l=60, r=20, t=60, b=120),
+            height=560,
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
     def monthly_transfer_mean_bar(
             self,
             df_dic,
             str1
     ):
-        mean = []
+        mean_vals = []
         x_labels = []
-        fig, ax = plt.subplots(figsize=(20, 12))
-        ax.set_axisbelow(True)
-        # すべてのDataFrameにconvert_daily_report_dataを適用
         for year, months in df_dic.items():
             for month, df in months.items():
                 try:
-                    # DataFrameを変換
-                    mean.append(df_dic[year][month][str1].mean())
+                    mean_vals.append(df_dic[year][month][str1].mean())
                     x_labels.append(f"{year}/{month}({len(df_dic[year][month][str1])})")
                 except Exception as e:
                     print(f"エラーが発生しました: 年={year}, 月={month}, {e}")
-        mean_colors = ['#46bdc6']*(len(x_labels)-1)+['#ff6d01']
-        plt.bar(x_labels,mean,color=mean_colors,width=0.5)
-        plt.ticklabel_format(style='plain',axis='y')
-        plt.xticks(rotation=-90, fontsize=30)
-        plt.yticks(fontsize = 25)
-        if "売上" in str1 or "客単価" in str1:
-            plt.gca().yaxis.set_major_formatter(FuncFormatter(self.currency_formatter))
-            plt.ylabel("月の総売上(円)", fontsize=40)
-        elif "客数" in str1:
-            plt.ylabel("月の総客数(人)", fontsize=40)
-            plt.gca().yaxis.set_major_formatter(FuncFormatter(self.customer_formatter))
-        plt.xlabel("年/月(営業日数)", fontsize=40)
-        plt.grid(axis='y', zorder=0)
-        st.pyplot(fig)
+        mean_colors = ['#46bdc6'] * (len(x_labels) - 1) + ['#ff6d01']
+
+        is_currency = "売上" in str1 or "客単価" in str1
+        if is_currency:
+            y_title = "月の総売上(円)"
+            hover_tmpl = '年月: %{x}<br>平均: ¥%{y:,.1f}<extra></extra>'
+            y_tickprefix = '¥'
+        else:
+            y_title = "月の総客数(人)"
+            hover_tmpl = '年月: %{x}<br>平均: %{y:,.1f}人<extra></extra>'
+            y_tickprefix = ''
+
+        fig = go.Figure()
+        fig.add_trace(go.Bar(
+            x=x_labels,
+            y=mean_vals,
+            name=str1,
+            marker_color=mean_colors,
+            hovertemplate=hover_tmpl,
+        ))
+        fig.update_layout(
+            xaxis=dict(title="年/月(営業日数)", tickangle=-90, tickfont=dict(size=14)),
+            yaxis=dict(
+                title=y_title,
+                tickformat=',.1f',
+                tickprefix=y_tickprefix,
+                tickfont=dict(size=14),
+                showgrid=True,
+                gridcolor='#e0e0e0',
+            ),
+            showlegend=True,
+            legend=dict(orientation='h', y=1.02, x=1, xanchor='right', yanchor='bottom'),
+            hovermode='x unified',
+            plot_bgcolor='white',
+            margin=dict(l=60, r=20, t=60, b=120),
+            height=560,
+        )
+        st.plotly_chart(fig, use_container_width=True)
 
 
     def weekly_comparison_bar(self, df1, df2, str1: str, date1: str, date2: str):
@@ -159,30 +260,22 @@ class DailyReportAnalysisCharts:
             offsetgroup=2  # バーをグループ化
         ))
 
-        # "売上" や "客単価" の場合は通貨フォーマット
+        yaxis_extra = {}
         if "売上" in str1 or "客単価" in str1:
-            fig.update_layout(
-                yaxis_tickformat="¥",  # 通貨のフォーマット
-                yaxis_title="月の総売上(円)",
-            )
-        # "客数" の場合は人数フォーマット
+            yaxis_extra = dict(tickprefix='¥', tickformat=',.0f', title="月の総売上(円)")
         elif "客数" in str1:
-            fig.update_layout(
-                yaxis_title="月の総客数(人)",
-            )
+            yaxis_extra = dict(tickformat=',.0f', ticksuffix='人', title="月の総客数(人)")
 
-        # x軸の設定 (日付ラベル、回転角度、フォントサイズ)
         fig.update_layout(
             xaxis=dict(
+                title="日付",
                 tickvals=np.arange(0, len(df1.index), 1),
                 ticktext=df1.index.tolist(),
                 tickfont=dict(size=15),
             ),
-            yaxis=dict(
-                tickfont=dict(size=15),
-            ),
+            yaxis=dict(tickfont=dict(size=15), **yaxis_extra),
             title=f'{date1}と{date2}の{str1}の曜日別比較',
-            barmode='group',  # バーをグループ化
+            barmode='group',
             showlegend=True,
             legend=dict(
                 title="月",
@@ -190,9 +283,9 @@ class DailyReportAnalysisCharts:
                 x=0.01,
                 y=0.99
             ),
-            xaxis_title="日付",
-            margin=dict(l=40, r=40, t=40, b=80),  # ラベルが切れないようにマージンを調整
+            margin=dict(l=40, r=40, t=40, b=80),
             plot_bgcolor='white',
+            hovermode='x unified',
         )
 
         # Streamlit でグラフを表示
