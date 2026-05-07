@@ -11,6 +11,9 @@ from src.components.utils.DailyReportAnalysisUtils import DailyReportAnalysisUti
 from src.components.utils.HourlyReportAnalysisUtils import HourlyReportAnalysisUtils
 from src.components.utils.LunchAnalysisUtils import LunchAnalysisUtils
 from src.components.charts.LunchAnalysisCharts import LunchAnalysisCharts
+from src.components.utils.MidnightAnalysisUtils import MidnightAnalysisUtils
+from src.components.utils.DinerAnalysisUtils import DinerAnalysisUtils
+from src.components.charts.RamenAnalysisCharts import RamenAnalysisCharts
 from src.components.utils.AlcoholAnalysisUtils import AlcoholAnalysisUtils
 from src.components.charts.AlcoholAnalysisCharts import AlcoholAnalysisCharts
 from src.components.utils.GetByProductDf import GetByProductDf
@@ -45,6 +48,24 @@ def get_lunch_analysis_charts() -> LunchAnalysisCharts:
     return LunchAnalysisCharts()
 
 @st.cache_resource
+def get_midnight_analysis_utils() -> MidnightAnalysisUtils:
+    return MidnightAnalysisUtils()
+
+@st.cache_resource
+def get_diner_analysis_utils() -> DinerAnalysisUtils:
+    return DinerAnalysisUtils()
+
+@st.cache_resource
+def get_ramen_analysis_charts() -> RamenAnalysisCharts:
+    return RamenAnalysisCharts()
+
+"""
+@st.cache_resource
+def get_midnight_analysis_charts() -> MidnightAnalysisCharts:
+    return MidnightAnalysisCharts()
+"""
+
+@st.cache_resource
 def get_alcohol_analysis_utils() -> AlcoholAnalysisUtils:
     return AlcoholAnalysisUtils()
 
@@ -63,6 +84,11 @@ hourlyReportAnalysisUtils = get_hourly_report_analysis_utils()
 hourlyReportAnalysisCharts = get_hourly_report_analysis_charts()
 lunchAnalysisUtils = get_lunch_analysis_utils()
 lunchAnalysisCharts = get_lunch_analysis_charts()
+midnightAnalysisUtils = get_midnight_analysis_utils()
+dinerAnalysisUtils = get_diner_analysis_utils()
+ramenAnalysisCharts = get_ramen_analysis_charts()
+
+#MidnightAnalysisCharts = get_midnight_analysis_charts()
 alcoholAnalysisUtils = get_alcohol_analysis_utils()
 alcoholAnalysisCharts = get_alcohol_analysis_charts()
 getByProductDf = get_by_product_df()
@@ -103,7 +129,7 @@ def hourly_report_analysis():
     時間別分析のグラフ
     '''
     # バーでファイルを選択
-    month_list = HourlyReportAnalysisUtils.get_month_list()
+    month_list = hourlyReportAnalysisUtils.get_month_list()
     selected_month = st.selectbox("表示したい年月を選択", month_list[::-1])
     try:
         option_daily = st.selectbox("↓↓↓売上か客数を選択↓↓↓", ["客数","売上"])
@@ -115,22 +141,21 @@ def hourly_report_analysis():
         
         # グラフ表示
         st.write(f'{selected_month}の時間別の{option_daily}データ({selected_days})')
-        if option_daily == "売上":
-            file_path = hourlyReportAnalysisUtils.get_sales_file_path_by_date(selected_month)
-            data = pd.read_csv(file_path,index_col=0)
-            data = hourlyReportAnalysisUtils.convert_hourly_report_data(data)
-            data = hourlyReportAnalysisUtils.get_week_groupby_mean(data)
-            
-            # 曜日を渡すように修正
-            hourlyReportAnalysisCharts.week_comp_bar(data, '売上額 (¥)', selected_days)
-        elif option_daily == "客数":
-            file_path = hourlyReportAnalysisUtils.get_cus_file_path_by_date(selected_month)
-            data = pd.read_csv(file_path,index_col=0)
-            data = hourlyReportAnalysisUtils.convert_hourly_report_data(data)
-            data = hourlyReportAnalysisUtils.get_week_groupby_mean(data)
 
-            # 曜日を渡すように修正
-            hourlyReportAnalysisCharts.week_comp_bar(data, '客数 (人)', selected_days)
+        # メインデータ取得・表示
+        kind  = "売上" if option_daily == "売上" else "客数"
+        label = '売上額 (¥)' if option_daily == "売上" else '客数 (人)'
+
+        #売上or客数のデータを取得し、pd.DataFrameに変換
+        data = hourlyReportAnalysisUtils.get_df_from_dic(selected_month, kind=kind)
+        if data.empty:
+            st.warning("該当月のデータがありません")
+            return 
+
+        data = hourlyReportAnalysisUtils.get_week_groupby_mean(data)
+        # 曜日を渡すように修正
+        hourlyReportAnalysisCharts.week_comp_bar(data, label, selected_days)
+
             
         # 比較分析セクション
         st.markdown("---")
@@ -138,6 +163,8 @@ def hourly_report_analysis():
         
         # 比較する対象（売上/客数）を選択
         compare_option = st.selectbox("比較する対象", ["売上", "客数"], key="compare_option")
+        compare_label  = '売上額 (¥)' if compare_option == "売上" else '客数 (人)'
+        compare_kind   = "売上" if compare_option == "売上" else "客数"
         
         # 2つのデータを比較するためのUI
         col1, col2 = st.columns(2)
@@ -152,44 +179,30 @@ def hourly_report_analysis():
             second_month = st.selectbox("月を選択", month_list[::-1], key="second_month")
             second_day = st.selectbox("曜日を選択", day_options, key="second_day_month")
         
-        # データの取得 - 1つ目
-        if compare_option == "売上":
-            first_file_path = hourlyReportAnalysisUtils.get_sales_file_path_by_date(first_month)
-            label = '売上額 (¥)'
-        else:  # 客数
-            first_file_path = hourlyReportAnalysisUtils.get_cus_file_path_by_date(first_month)
-            label = '客数 (人)'
+        # 比較データ取得、kindで売上か客数かを選択し、pd.DataFrameに変換
+        first_data  = hourlyReportAnalysisUtils.get_df_from_dic(first_month,  kind=compare_kind)
+        second_data = hourlyReportAnalysisUtils.get_df_from_dic(second_month, kind=compare_kind)
+
+        if first_data.empty:
+            st.warning(f"{first_month}のデータが見つかりません。")
+            return
+        if second_data.empty:
+            st.warning(f"{second_month}のデータが見つかりません。")
+            return
         
-        # データの取得 - 2つ目
-        if compare_option == "売上":
-            second_file_path = hourlyReportAnalysisUtils.get_sales_file_path_by_date(second_month)
-        else:  # 客数
-            second_file_path = hourlyReportAnalysisUtils.get_cus_file_path_by_date(second_month)
-        
-        # データの処理と表示
-        if first_file_path and second_file_path:
-            first_data = pd.read_csv(first_file_path, index_col=0)
-            first_data = hourlyReportAnalysisUtils.convert_hourly_report_data(first_data)
-            first_data = hourlyReportAnalysisUtils.get_week_groupby_mean(first_data)
+        # 曜日を渡すように修正
+        first_data  = hourlyReportAnalysisUtils.get_week_groupby_mean(first_data)
+        second_data = hourlyReportAnalysisUtils.get_week_groupby_mean(second_data)
             
-            second_data = pd.read_csv(second_file_path, index_col=0)
-            second_data = hourlyReportAnalysisUtils.convert_hourly_report_data(second_data)
-            second_data = hourlyReportAnalysisUtils.get_week_groupby_mean(second_data)
-            
-            # 比較グラフを表示
-            hourlyReportAnalysisCharts.compare_two_data(
-                first_data, second_data, 
-                label, 
-                f"{first_month} ({first_day})", 
-                f"{second_month} ({second_day})",
-                first_day if first_day != "全体" else None,
-                second_day if second_day != "全体" else None
-            )
-        else:
-            if not first_file_path:
-                st.warning(f"{first_month}のデータが見つかりません。")
-            if not second_file_path:
-                st.warning(f"{second_month}のデータが見つかりません。")
+        # 比較グラフの表示
+        hourlyReportAnalysisCharts.compare_two_data(
+            first_data, second_data,
+            compare_label,
+            f"{first_month} ({first_day})",
+            f"{second_month} ({second_day})",
+            first_day  if first_day  != "全体" else None,
+            second_day if second_day != "全体" else None
+        )
             
     except Exception as e:
         st.error(f"エラーが発生しました: {e}")
@@ -277,32 +290,92 @@ def weekly_report_analysis():
             st.metric(day, formatted_value, change)
 
 
-def night_ramen_analysis():
+def ramen_analysis():
     '''
-    夜ラーメン分析のグラフ
+    ラーメン分析のグラフ
     '''
-    st.title("開発中...🐭")
+    try:
+        # ラーメンの種類を選択
+        option_time = st.selectbox("時間帯", ["昼","夜","深夜","全体"])
+
+        # 月リストを新しい順で取得
+        month_list = lunchAnalysisUtils.get_month_list()[::-1]
+
+        col1, col2 = st.columns(2)
+        with col1:
+            option_month_start = st.selectbox("開始月", month_list, index=0)
+        with col2:
+            # 終了月の初期値を開始月と同じにする
+            start_idx = month_list.index(option_month_start)
+            option_month_end = st.selectbox("終了月", month_list, index=start_idx)
+
+        # 開始 > 終了の逆転を防ぐ（古い順のインデックスで比較）
+        month_list_asc = lunchAnalysisUtils.get_month_list()  # 昇順
+        idx_start = month_list_asc.index(option_month_start)
+        idx_end   = month_list_asc.index(option_month_end)
+        if idx_start > idx_end:
+            st.warning("⚠️ 開始月が終了月より新しいです。開始月と終了月を入れ替えて表示します。")
+            option_month_start, option_month_end = option_month_end, option_month_start
+
+
+        df_val_num = getByProductDf.df_all_num
+
+        lunch_json = read_json_file(filepath='data/json/lunch.json')
+        midnight_json = read_json_file(filepath='data/json/深夜限定.json')
+        diner_json = read_json_file(filepath='data/json/ディナー.json')
+
+        df_val_num_lunch_dict = getByProductDf.json_to_df_dict(df_all=df_val_num
+                                                 ,json_dict=lunch_json)
+        df_val_num_midnight_dict = getByProductDf.json_to_df_dict(df_all=df_val_num
+                                                   ,json_dict=midnight_json)
+        df_val_num_diner_dict = getByProductDf.json_to_df_dict(df_all=df_val_num
+                                                  ,json_dict=diner_json)
+
+        df_lunch = lunchAnalysisUtils.prepare_ramen_df_num(df_val_num_lunch_dict)
+        df_midnight = midnightAnalysisUtils.prepare_midnight_df_num(df_val_num_midnight_dict)
+        df_diner = dinerAnalysisUtils.prepare_diner_df_num(df_val_num_diner_dict)
+
+        charts = RamenAnalysisCharts()
+
+        st.subheader("🥣 ラーメン提供割合（円グラフ）")
+        charts.pie_ramen_ratio_by_time(
+            df_lunch, df_diner, df_midnight,
+            time_filter=option_time,
+            month_start=option_month_start,
+            month_end=option_month_end,
+        )
+
+        st.subheader("📊 曜日別ラーメン提供杯数（棒グラフ）")
+        charts.bar_ramen_by_weekday(
+            df_lunch, df_diner, df_midnight,
+            time_filter=option_time,
+            month_start=option_month_start,
+            month_end=option_month_end,
+        )
+
+
+    except Exception as e:
+        st.error(f"エラーが発生しました: {e}")
 
 def lunch_ramen_analysis():
-    '''
-    ランチラーメン分析のグラフ
-    '''
-    st.title("開発中...🐭")
     month_list = lunchAnalysisUtils.get_month_list()
     selected_month = st.selectbox("どの年月を表示しますか？", month_list[::-1])
-    df_val_num = getByProductDf.df_all_val
-    df_val_sale = getByProductDf.df_all_sale
 
-    lunch_json = read_json_file(filepath='data/json/lunch.json')
-    df_val_num_dict = getByProductDf.json_to_df_dict(df_all=df_val_num
-                                                 ,json_dict=lunch_json)
-    df_val_sale_dict = getByProductDf.json_to_df_dict(df_all=df_val_sale
-                                                 ,json_dict=lunch_json)
+    df_val_num  = getByProductDf.df_all_num
+    lunch_json  = read_json_file(filepath='data/json/lunch.json')
+    df_val_num_dict = getByProductDf.json_to_df_dict(
+        df_all=df_val_num, json_dict=lunch_json
+    )
     df_ramen = lunchAnalysisUtils.prepare_ramen_df_num(df_val_num_dict)
-
     result_ramen = lunchAnalysisUtils.summarize_ramen_sales(df_ramen, selected_month)
-    lunchAnalysisCharts.bar_ranking_df_by_month(result_ramen, selected_month, "ラーメンの合計販売数")
-    lunchAnalysisCharts.line_trend_df(df_ramen, "ラーメンの販売数推移")
+
+    # 追加グラフ
+    st.subheader("🥣 昼カテゴリ別提供数")
+    lunchAnalysisCharts.pie_lunch_category(df_val_num_dict, selected_month)
+
+    st.subheader("🍱 セットメニュー内訳")
+    lunchAnalysisCharts.pie_set_menu(df_val_num_dict, selected_month)
+
 
 def alchohol_analysis():
     '''
@@ -316,7 +389,7 @@ def alchohol_analysis():
         st.write(f'月単位の{option_alcohol}データ')
 
 
-        df_val_num = getByProductDf.df_all_val
+        df_val_num = getByProductDf.df_all_num
         df_val_sale = getByProductDf.df_all_sale
 
         alcohol_json = read_json_file(filepath='data/json/alcohol.json')
