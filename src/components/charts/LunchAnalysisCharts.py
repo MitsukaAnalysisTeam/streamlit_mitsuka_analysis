@@ -1,78 +1,127 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+import plotly.graph_objects as go
 
 
 class LunchAnalysisCharts:
     def __init__(self):
         pass
 
+    def pie_lunch_category(
+        self,
+        df_dict: dict,
+        selected_month: str,
+        mode: str = "販売数"
+    ) -> None:
+        TARGET_KEYS = [
+            "カリー", "カリーつけ麺", "海老みそ", "焦がし海老味噌",
+            "ベジ味噌", "白味噌", "温玉カレーラーメン", "油そば",
+            "発酵唐揚げプレート",
+            "発酵御膳",
+            "キッズ"
+        ]
 
-    def bar_ranking_df_by_month(
-            self,
-            df: pd.DataFrame,
-            date: str,
-            fig_title: str
-            ):
-        """
-        指定された年月の各商品の合計販売数をStreamlitで可視化する関数（Plotly版）
-        - df: データフレーム (インデックスが日付)
-        - date: 'YYYY_MM' 形式の文字列
-        """
-        year = int(date[:4])
-        month = int(date.split('_')[1])        # データを販売数の降順に並べ替え
-        df_sorted = df.sort_values(ascending=False)
+        year  = int(selected_month[:4])
+        month = int(selected_month.split('_')[1])
 
-        # 商品の順位に基づいて色を設定
-        color_map = {
-            0: '#FFD700',   # 1位: Gold
-            1: '#C0C0C0',   # 2位: Silver
-            2: '#CD7F32',   # 3位: Bronze
-        }
+        def _sum_key(key: str) -> float:
+            # 部分一致をやめ、直接指定に変更
+            if key not in df_dict:
+                return 0.0
+            
+            df = df_dict[key].copy()
+            if not pd.api.types.is_datetime64_any_dtype(df.index):
+                df.index = pd.to_datetime(df.index)
+            
+            # 指定年月のデータを抽出
+            target_df = df[(df.index.year == year) & (df.index.month == month)]
+            # 全カラムの合計を合算して返す
+            return float(pd.to_numeric(target_df.values.flatten(), errors='coerce').sum())
 
-        # その他の商品は青色
-        colors = [color_map.get(i, 'blue') for i in range(len(df_sorted))]
+        totals_dict = {key: _sum_key(key) for key in TARGET_KEYS}
+        totals = pd.Series(totals_dict)
+        totals = totals[totals > 0].sort_values(ascending=False)
 
-        # plotlyでグラフ作成
-        fig = px.bar(
-            df_sorted,
-            x=df_sorted.index,
-            y=df_sorted.values,
-            labels={"x": "商品", "y": "販売数"},
-            title=f"{year}年{month}月 の {fig_title}",
-            color=colors,  # 色を設定
-            color_discrete_map='identity'  # カスタム色を適用
-        )
+        if totals.empty:
+            st.warning(f"{year}年{month}月のデータがありません。")
+            return
 
+        fig = go.Figure(go.Pie(
+            labels=totals.index.tolist(),
+            values=totals.values.tolist(),
+            textinfo="label+percent",
+            insidetextorientation='horizontal', 
+            hole=0.3,
+            sort=True, # グラフを降順にする
+            direction='clockwise',
+            rotation=0,
+        ))
         fig.update_layout(
-            xaxis=dict(title=''),
-            xaxis_tickangle=-45,
-            margin=dict(l=20, r=20, t=40, b=80)
+            title_text=f"{year}年{month}月 昼カテゴリ別{mode}割合",
+            margin=dict(l=50, r=50, t=80, b=50),
+            height=500,
+            legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.2, 
+            xanchor="center",
+            x=0.5
         )
-
+        )
         st.plotly_chart(fig, use_container_width=True)
 
-    def line_trend_df(
-            self,
-            df: pd.DataFrame,
-            fig_title: str
-            ):
-        """
-        指定されたデータフレームの各商品の販売数の推移をStreamlitで可視化する関数（Plotly版）
-        - df: データフレーム (インデックスが日付)
-        """
-        # plotlyでグラフ作成
-        fig = px.line(
-            df,
-            x=df.index,
-            y=df.columns,
-            labels={"x": "日付", "value": "販売数", "variable": "商品"},
-            title=f"{fig_title} の販売数推移"
-        )
+    def pie_set_menu(
+        self,
+        df_dict: dict,
+        selected_month: str,
+        mode: str = "販売数"
+    ) -> None:
+        SET_KEYS = ["セット", "ラーメンセット"]
+        year = int(selected_month[:4])
+        month = int(selected_month.split('_')[1])
+
+        def _sum_by_item(key: str) -> pd.Series:
+            if key not in df_dict: return pd.Series(dtype=float)
+            df = df_dict[key].copy()
+            if not pd.api.types.is_datetime64_any_dtype(df.index):
+                df.index = pd.to_datetime(df.index)
+            df = df[(df.index.year == year) & (df.index.month == month)]
+            return df.apply(pd.to_numeric, errors='coerce').sum()
+
+        combined = pd.concat([_sum_by_item(k) for k in SET_KEYS]).fillna(0)
+        combined = combined[combined > 0]
+
+        if combined.empty:
+            st.warning("該当月のセットデータがありません")
+            return
+
+        combined = combined.sort_index(ascending=True)
+
+        fig = go.Figure(go.Pie(
+            labels=combined.index.tolist(),
+            values=combined.values.tolist(),
+            textinfo="label+percent",
+            insidetextorientation='horizontal',
+            hole=0.3,
+            sort=True, 
+            direction='clockwise',
+            rotation=0,
+            marker_colors=px.colors.qualitative.Set2,
+        ))
 
         fig.update_layout(
-            xaxis=dict(title=''),
-            margin=dict(l=20, r=20, t=40, b=80)
+            title_text=f"{year}年{month}月 セットメニュー{mode}内訳",
+            title_font_size=16,
+            margin=dict(l=50, r=50, t=80, b=50),
+            height=420,
+            showlegend=True,
+            legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.2, 
+            xanchor="center",
+            x=0.5
         )
-
+        )
         st.plotly_chart(fig, use_container_width=True)
