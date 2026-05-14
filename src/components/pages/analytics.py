@@ -359,6 +359,11 @@ def ramen_analysis():
         # ラーメンの種類を選択
         option_time = st.selectbox("時間帯", ["昼","夜","深夜","全体"])
 
+        # 表示モード（販売数 or 売上）の選択
+        col_mode, col_blank = st.columns([1, 1])
+        with col_mode:
+            analysis_mode = st.radio("表示モード", ["販売数", "売上"], horizontal=True)
+
         # 月リストを新しい順で取得
         month_list = lunchAnalysisUtils.get_month_list()[::-1]
 
@@ -379,39 +384,42 @@ def ramen_analysis():
             option_month_start, option_month_end = option_month_end, option_month_start
 
 
-        df_val_num = getByProductDf.df_all_num
+        # モードに応じてベースとなるDataFrameを切り替え
+        if analysis_mode == "売上":
+            df_base = getByProductDf.df_all_sale
+        else:
+            df_base = getByProductDf.df_all_num
 
         lunch_json = read_json_file(filepath='data/json/lunch.json')
         midnight_json = read_json_file(filepath='data/json/深夜限定.json')
         diner_json = read_json_file(filepath='data/json/ディナー.json')
 
-        df_val_num_lunch_dict = getByProductDf.json_to_df_dict(df_all=df_val_num
-                                                 ,json_dict=lunch_json)
-        df_val_num_midnight_dict = getByProductDf.json_to_df_dict(df_all=df_val_num
-                                                   ,json_dict=midnight_json)
-        df_val_num_diner_dict = getByProductDf.json_to_df_dict(df_all=df_val_num
-                                                  ,json_dict=diner_json)
+        dict_lunch = getByProductDf.json_to_df_dict(df_all=df_base, json_dict=lunch_json)
+        dict_midnight = getByProductDf.json_to_df_dict(df_all=df_base, json_dict=midnight_json)
+        dict_diner = getByProductDf.json_to_df_dict(df_all=df_base, json_dict=diner_json)
 
-        df_lunch = lunchAnalysisUtils.prepare_ramen_df_num(df_val_num_lunch_dict)
-        df_midnight = midnightAnalysisUtils.prepare_midnight_df_num(df_val_num_midnight_dict)
-        df_diner = dinerAnalysisUtils.prepare_diner_df_num(df_val_num_diner_dict)
+        df_lunch = lunchAnalysisUtils.prepare_ramen_df_num(dict_lunch)
+        df_midnight = midnightAnalysisUtils.prepare_midnight_df_num(dict_midnight)
+        df_diner = dinerAnalysisUtils.prepare_diner_df_num(dict_diner)
 
         charts = RamenAnalysisCharts()
 
-        st.subheader("🥣 ラーメン提供割合（円グラフ）")
+        st.subheader(f"🥣 ラーメン{analysis_mode}割合（円グラフ）")
         charts.pie_ramen_ratio_by_time(
             df_lunch, df_diner, df_midnight,
             time_filter=option_time,
             month_start=option_month_start,
             month_end=option_month_end,
+            mode=analysis_mode
         )
 
-        st.subheader("📊 曜日別ラーメン提供杯数（棒グラフ）")
+        st.subheader(f"📊 曜日別ラーメン{analysis_mode}（棒グラフ）")
         charts.bar_ramen_by_weekday(
             df_lunch, df_diner, df_midnight,
             time_filter=option_time,
             month_start=option_month_start,
             month_end=option_month_end,
+            mode=analysis_mode
         )
 
 
@@ -420,22 +428,42 @@ def ramen_analysis():
 
 def lunch_ramen_analysis():
     month_list = lunchAnalysisUtils.get_month_list()
-    selected_month = st.selectbox("どの年月を表示しますか？", month_list[::-1])
+    
+    # ユーザー選択エリア
+    col1, col2 = st.columns(2)
+    with col1:
+        selected_month = st.selectbox("どの年月を表示しますか？", month_list[::-1])
+    with col2:
+        # 販売数か売上かを選択
+        mode = st.radio("集計モード", ["販売数", "売上"], horizontal=True)
 
-    df_val_num  = getByProductDf.df_all_num
-    lunch_json  = read_json_file(filepath='data/json/lunch.json')
+    # --- データ準備 ---
+    # 数量データ
+    df_val_num = getByProductDf.df_all_num
+    lunch_json = read_json_file(filepath='data/json/lunch.json')
     df_val_num_dict = getByProductDf.json_to_df_dict(
         df_all=df_val_num, json_dict=lunch_json
     )
-    df_ramen = lunchAnalysisUtils.prepare_ramen_df_num(df_val_num_dict)
-    result_ramen = lunchAnalysisUtils.summarize_ramen_sales(df_ramen, selected_month)
 
-    # 追加グラフ
-    st.subheader("🥣 昼カテゴリ別提供数")
-    lunchAnalysisCharts.pie_lunch_category(df_val_num_dict, selected_month)
+    # 売上データ
+    df_sale_num = getByProductDf.df_all_sale
+    df_val_sale_dict = getByProductDf.json_to_df_dict(
+        df_all=df_sale_num, json_dict=lunch_json
+    )
 
-    st.subheader("🍱 セットメニュー内訳")
-    lunchAnalysisCharts.pie_set_menu(df_val_num_dict, selected_month)
+    # モードによって渡す辞書を切り替える
+    target_dict = df_val_sale_dict if mode == "売上" else df_val_num_dict
+    
+    # 単位のラベル（任意でグラフに渡すと親切です）
+    unit = "円" if mode == "売上" else "個/杯"
+
+    # --- グラフ表示 ---
+    st.subheader(f"🥣 昼カテゴリ別{mode}割合")
+    # クラス側のメソッドにmodeやunitを渡せるようにしておくと汎用性が高まります
+    lunchAnalysisCharts.pie_lunch_category(target_dict, selected_month, mode)
+
+    st.subheader(f"🍱 セットメニュー{mode}内訳")
+    lunchAnalysisCharts.pie_set_menu(target_dict, selected_month, mode)
 
 
 def alchohol_analysis():

@@ -12,6 +12,7 @@ class LunchAnalysisCharts:
         self,
         df_dict: dict,
         selected_month: str,
+        mode: str = "販売数"
     ) -> None:
         TARGET_KEYS = [
             "カリー", "カリーつけ麺", "海老みそ", "焦がし海老味噌",
@@ -50,14 +51,23 @@ class LunchAnalysisCharts:
             labels=totals.index.tolist(),
             values=totals.values.tolist(),
             textinfo="label+percent",
+            insidetextorientation='horizontal', 
             hole=0.3,
             sort=True, # グラフを降順にする
             direction='clockwise',
             rotation=0,
         ))
         fig.update_layout(
-            title_text=f"{year}年{month}月 昼カテゴリ別提供数",
-            height=420,
+            title_text=f"{year}年{month}月 昼カテゴリ別{mode}割合",
+            margin=dict(l=50, r=50, t=80, b=50),
+            height=500,
+            legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.2, 
+            xanchor="center",
+            x=0.5
+        )
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -65,6 +75,7 @@ class LunchAnalysisCharts:
         self,
         df_dict: dict,
         selected_month: str,
+        mode: str = "販売数"
     ) -> None:
         SET_KEYS = ["セット", "ラーメンセット"]
         year = int(selected_month[:4])
@@ -91,6 +102,7 @@ class LunchAnalysisCharts:
             labels=combined.index.tolist(),
             values=combined.values.tolist(),
             textinfo="label+percent",
+            insidetextorientation='horizontal',
             hole=0.3,
             sort=True, 
             direction='clockwise',
@@ -99,10 +111,17 @@ class LunchAnalysisCharts:
         ))
 
         fig.update_layout(
-            title_text=f"{year}年{month}月 セットメニュー内訳",
+            title_text=f"{year}年{month}月 セットメニュー{mode}内訳",
             title_font_size=16,
-            margin=dict(l=20, r=20, t=60, b=20),
+            margin=dict(l=50, r=50, t=80, b=50),
             height=420,
-            showlegend=True 
+            showlegend=True,
+            legend=dict(
+            orientation="h",
+            yanchor="top",
+            y=-0.2, 
+            xanchor="center",
+            x=0.5
+        )
         )
         st.plotly_chart(fig, use_container_width=True)

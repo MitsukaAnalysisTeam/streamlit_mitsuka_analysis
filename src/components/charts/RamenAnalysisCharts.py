@@ -115,7 +115,7 @@ class RamenAnalysisCharts:
         time_filter: str = "全体",
         month_start: str | None = None,
         month_end:   str | None = None,
-        value_mode:  str = "提供割合",
+        mode:  str = "販売数",
     ) -> None:
         datasets = {"昼": df_lunch, "夜": df_diner, "深夜": df_midnight}
         targets = datasets if time_filter == "全体" else {time_filter: datasets[time_filter]}
@@ -141,6 +141,7 @@ class RamenAnalysisCharts:
             vertical_spacing=0.1,
         )
 
+        unit = "円" if mode == "売上" else "杯"
         for col_idx, (label, df) in enumerate(targets.items(), start=1):
             totals = df.sum(numeric_only=True)
             totals = totals[totals > 0]
@@ -163,6 +164,7 @@ class RamenAnalysisCharts:
                     name=label,
                     text=visible_labels,   
                     textinfo="text+percent",
+                    hovertemplate=f"%{{label}}<br>%{{value:,.0f}}{unit}<br>%{{percent}}<extra></extra>",
                     hole=0.3,
                     rotation=0, # 0度スタート
                     direction="clockwise",
@@ -173,16 +175,12 @@ class RamenAnalysisCharts:
                 row=1, col=col_idx,
             )
             
-        title_suffix = "提供割合" if value_mode == "提供割合" else "提供数"
-        time_str     = time_filter
-        range_str    = self._month_range_label(month_start, month_end) if month_start and month_end else ""
+        range_str = self._month_range_label(month_start, month_end) if month_start and month_end else ""
         fig.update_layout(
-            title_text=f"【{time_str}】{range_str} ラーメン{title_suffix}",
-            title_font_size=16,
-            title_y = 0.98,
-            legend=dict(orientation="v", x=1.02, y=0.5),
-            margin=dict(l=20, r=20, t=130, b=20),
-            height=500,
+            title_text=f"【{time_filter}】{range_str} ラーメン{mode}割合",
+            margin=dict(l=20, r=20, t=130, b=80),
+            height=550,
+            legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5) # 凡例を下へ
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -197,6 +195,7 @@ class RamenAnalysisCharts:
         time_filter: str = "全体",
         month_start: str | None = None,
         month_end:   str | None = None,
+        mode: str = "販売数"
     ) -> None:
         datasets = {"昼": df_lunch, "夜": df_diner, "深夜": df_midnight}
         targets  = datasets if time_filter == "全体" else {time_filter: datasets[time_filter]}
@@ -218,17 +217,17 @@ class RamenAnalysisCharts:
 
         if len(targets) == 1:
             label, df = next(iter(targets.items()))
-            self._render_weekday_bar(df, label, range_str)
+            self._render_weekday_bar(df, label, range_str, mode)
         else:
             tabs = st.tabs(list(targets.keys()))
             for tab, (label, df) in zip(tabs, targets.items()):
                 with tab:
-                    self._render_weekday_bar(df, label, range_str)
+                    self._render_weekday_bar(df, label, range_str, mode)
 
     # ──────────────────────────────────────────
     # 内部ヘルパー：棒グラフ描画
     # ──────────────────────────────────────────
-    def _render_weekday_bar(self, df: pd.DataFrame, label: str, range_str: str = "") -> None:
+    def _render_weekday_bar(self, df: pd.DataFrame, label: str, range_str: str , mode: str = "販売数") -> None:
         if df.empty:
             st.warning(f"{label}のデータがありません")
             return
@@ -249,20 +248,31 @@ class RamenAnalysisCharts:
         color_map = {col: self.MENU_COLORS.get(col, self._FALLBACK_COLORS[i % len(self._FALLBACK_COLORS)])
                      for i, col in enumerate(numeric_cols)}
 
+        unit = "円" if mode == "売上" else "杯"
+        y_label = f"{mode}合計 ({unit})" # 軸のタイトル用
+
         fig = px.bar(
             weekday_df.reset_index(),
             x="曜日",
             y=numeric_cols,
             barmode="group",
-            labels={"value": "提供杯数", "variable": "メニュー", "曜日": "曜日"},
-            title=f"【{label}】{range_str} 曜日別ラーメン提供杯数",
+            labels={"value": mode, "variable": "メニュー", "曜日": "曜日"},
+            title=f"【{label}】{range_str} 曜日別ラーメン{mode}",
             color_discrete_map = color_map
         )
         fig.update_layout(
             xaxis=dict(title="曜日", categoryorder="array", categoryarray=self.WEEKDAY_ORDER),
-            yaxis=dict(title="提供杯数"),
+            yaxis=dict(
+                title=y_label,
+                tickformat=",d" if mode == "売上" else None # 売上の時だけカンマ区切り
+            ),
             legend=dict(title="メニュー", orientation="v", x=1.02, y=0.5),
-            margin=dict(l=20, r=20, t=50, b=40),
-            height=420,
+            margin=dict(l=20, r=20, t=80, b=40),
+            height=450,
         )
+
+        fig.update_traces(
+            hovertemplate=f"曜日: %{{x}}<br>メニュー: %{{fullData.name}}<br>{mode}: %{{y:,.0f}}{unit}<extra></extra>"
+        )
+
         st.plotly_chart(fig, use_container_width=True)
