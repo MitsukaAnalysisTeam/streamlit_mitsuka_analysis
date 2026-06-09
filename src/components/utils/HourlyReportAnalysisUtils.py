@@ -116,15 +116,13 @@ class HourlyReportAnalysisUtils:
         week_group_mean = week_group_mean.reindex(index=['水', '木', '金', '土', '日'])
         return week_group_mean
 
-    """
-    辞書から指定年月のDataFrameを取得する
-    これにより、分析ページでのコードがシンプルになる
-    (データ取得してpd.DataFrameに変換する処理をここに集約できるため)
-    """
+
     def get_df_from_dic(self, date: str, kind: str = "客数") -> pd.DataFrame:
         """
-        辞書から指定年月のDataFrameを取得する。
+        辞書から指定年月のDataFrameを取得する
         kind: "客数" or "売上"
+        これにより、分析ページでのコードがシンプルになる
+        (データ取得してpd.DataFrameに変換する処理をここに集約できるため)
         """
         year  = date[:4]
         month = date.split('_')[1]
