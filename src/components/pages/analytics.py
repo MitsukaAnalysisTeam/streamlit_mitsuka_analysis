@@ -87,6 +87,22 @@ def get_yearly_report_analysis_utils() -> YearlyReportAnalysisUtils:
 def get_yearly_report_analysis_charts() -> YearlyReportAnalysisCharts:
     return YearlyReportAnalysisCharts()
 
+@st.cache_resource
+def get_lunch_json():
+    return read_json_file(filepath='data/json/lunch.json')
+
+@st.cache_resource
+def get_midnight_json():
+    return read_json_file(filepath='data/json/深夜限定.json')
+
+@st.cache_resource
+def get_diner_json():
+    return read_json_file(filepath='data/json/ディナー.json')
+
+@st.cache_resource
+def get_alcohol_json():
+    return read_json_file(filepath='data/json/alcohol.json')
+
 # ここでキャッシュされたインスタンスをグローバル変数に格納（実際の関数内でも取得可能）
 dailyReportAnalysisUtils = get_daily_report_analysis_utils()
 dailyReportAnalysisCharts = get_daily_report_analysis_charts()
@@ -97,13 +113,17 @@ lunchAnalysisCharts = get_lunch_analysis_charts()
 midnightAnalysisUtils = get_midnight_analysis_utils()
 dinerAnalysisUtils = get_diner_analysis_utils()
 ramenAnalysisCharts = get_ramen_analysis_charts()
-
-#MidnightAnalysisCharts = get_midnight_analysis_charts()
 alcoholAnalysisUtils = get_alcohol_analysis_utils()
 alcoholAnalysisCharts = get_alcohol_analysis_charts()
 getByProductDf = get_by_product_df()
 yearlyReportAnalysisUtils = get_yearly_report_analysis_utils()
 yearlyReportAnalysisCharts = get_yearly_report_analysis_charts()
+
+# キャッシュ済みのJSONデータをグローバル変数に格納
+lunch_json    = get_lunch_json()
+midnight_json = get_midnight_json()
+diner_json    = get_diner_json()
+alcohol_json  = get_alcohol_json()
 
 
 def show():
@@ -222,9 +242,6 @@ def hourly_report_analysis():
 
     
 def monthly_report_analysis():
-    # インスタンス化
-    # dailyReportAnalysisUtils = DailyReportAnalysisUtils()
-    # dailyReportAnalysisCharts = DailyReportAnalysisCharts()
     '''
     月毎のグラフ表示
     '''
@@ -360,7 +377,7 @@ def ramen_analysis():
         option_time = st.selectbox("時間帯", ["昼","夜","深夜","全体"])
 
         # 表示モード（販売数 or 売上）の選択
-        col_mode, col_blank = st.columns([1, 1])
+        col_mode, _ = st.columns([1, 1])
         with col_mode:
             analysis_mode = st.radio("表示モード", ["販売数", "売上"], horizontal=True)
 
@@ -390,10 +407,6 @@ def ramen_analysis():
         else:
             df_base = getByProductDf.df_all_num
 
-        lunch_json = read_json_file(filepath='data/json/lunch.json')
-        midnight_json = read_json_file(filepath='data/json/深夜限定.json')
-        diner_json = read_json_file(filepath='data/json/ディナー.json')
-
         dict_lunch = getByProductDf.json_to_df_dict(df_all=df_base, json_dict=lunch_json)
         dict_midnight = getByProductDf.json_to_df_dict(df_all=df_base, json_dict=midnight_json)
         dict_diner = getByProductDf.json_to_df_dict(df_all=df_base, json_dict=diner_json)
@@ -402,10 +415,8 @@ def ramen_analysis():
         df_midnight = midnightAnalysisUtils.prepare_midnight_df_num(dict_midnight)
         df_diner = dinerAnalysisUtils.prepare_diner_df_num(dict_diner)
 
-        charts = RamenAnalysisCharts()
-
         st.subheader(f"🥣 ラーメン{analysis_mode}割合（円グラフ）")
-        charts.pie_ramen_ratio_by_time(
+        ramenAnalysisCharts.pie_ramen_ratio_by_time(
             df_lunch, df_diner, df_midnight,
             time_filter=option_time,
             month_start=option_month_start,
@@ -414,7 +425,7 @@ def ramen_analysis():
         )
 
         st.subheader(f"📊 曜日別ラーメン{analysis_mode}（棒グラフ）")
-        charts.bar_ramen_by_weekday(
+        ramenAnalysisCharts.bar_ramen_by_weekday(
             df_lunch, df_diner, df_midnight,
             time_filter=option_time,
             month_start=option_month_start,
@@ -440,7 +451,6 @@ def lunch_ramen_analysis():
     # --- データ準備 ---
     # 数量データ
     df_val_num = getByProductDf.df_all_num
-    lunch_json = read_json_file(filepath='data/json/lunch.json')
     df_val_num_dict = getByProductDf.json_to_df_dict(
         df_all=df_val_num, json_dict=lunch_json
     )
@@ -477,52 +487,19 @@ def alchohol_analysis():
         # グラフ表示
         st.write(f'月単位の{option_alcohol}データ')
 
-
-        df_val_num = getByProductDf.df_all_num
-        df_val_sale = getByProductDf.df_all_sale
-
-        alcohol_json = read_json_file(filepath='data/json/alcohol.json')
-        df_val_num_dict = getByProductDf.json_to_df_dict(df_all=df_val_num
-                                                    ,json_dict=alcohol_json)
-        df_val_sale_dict = getByProductDf.json_to_df_dict(df_all=df_val_sale
-                                                    ,json_dict=alcohol_json)
+        # 毎回「平均杯数」と「合計売上」を計算するのではなく、選択に応じて準備しておくことで効率化
+        df_val = getByProductDf.df_all_num if option_daily == "平均杯数" else getByProductDf.df_all_sale
+        df_dict = getByProductDf.json_to_df_dict(df_all=df_val, json_dict=alcohol_json)
+        df_data = alcoholAnalysisUtils.prepare_alcohol_df_num(df_dict).reset_index()
         
-        df_alcohol_num = alcoholAnalysisUtils.prepare_alcohol_df_num(df_val_num_dict)
-        df_alcohol_num = df_alcohol_num.reset_index()
-        df_alcohol_sale = alcoholAnalysisUtils.prepare_alcohol_df_num(df_val_sale_dict)
-        df_alcohol_sale = df_alcohol_sale.reset_index()
-        
+        # ifの入れ子構造がなくなり、簡潔に
         if option_alcohol == "アルコール合計":
-            if option_daily == "平均杯数":
-                data = alcoholAnalysisUtils.get_alchol_data(df_alcohol_num)
-                alcoholAnalysisCharts.alchol_graph(data)
-            else: #
-                data = alcoholAnalysisUtils.get_alchol_data(df_alcohol_sale)
-                alcoholAnalysisCharts.alchol_graph(data)
+            alcoholAnalysisCharts.alchol_graph(alcoholAnalysisUtils.get_alchol_data(df_data))
         elif option_alcohol == "ビール":
-            if option_daily == "平均杯数":
-                data = alcoholAnalysisUtils.get_beer_data(df_alcohol_num)
-                alcoholAnalysisCharts.beer_graph(data)
-            else:
-                data = alcoholAnalysisUtils.get_beer_data(df_alcohol_sale)
-                alcoholAnalysisCharts.beer_graph(data)
+            alcoholAnalysisCharts.beer_graph(alcoholAnalysisUtils.get_beer_data(df_data))
         elif option_alcohol == "秋鹿":
-            if option_daily == "平均杯数":
-                #データの読み込み
-                data = alcoholAnalysisUtils.get_akishika_data(df_alcohol_num)
-                alcoholAnalysisCharts.akishika_graph(data)
-            else:
-                # データの読み込み
-                data = alcoholAnalysisUtils.get_akishika_data(df_alcohol_sale)
-                alcoholAnalysisCharts.akishika_graph(data)
+            alcoholAnalysisCharts.akishika_graph(alcoholAnalysisUtils.get_akishika_data(df_data))
         else: # 若尾ワイン
-            if option_daily == "平均杯数":
-                # データの読み込み
-                data = alcoholAnalysisUtils.get_wine_data(df_alcohol_num)
-                alcoholAnalysisCharts.wine_graph(data)
-            else:
-                # データの読み込み
-                data = alcoholAnalysisUtils.get_wine_data(df_alcohol_sale)
-                alcoholAnalysisCharts.wine_graph(data)
+            alcoholAnalysisCharts.wine_graph(alcoholAnalysisUtils.get_wine_data(df_data))
     except Exception as e:
         st.error(f"エラーが発生しました: {e}")
