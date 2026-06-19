@@ -6,7 +6,7 @@ japanize_matplotlib.japanize()
 
 class GetByProductDf:
     def __init__(self):
-        self.df_all_val = self.get_all_val_num()
+        self.df_all_num = self.get_all_val_num()
         self.df_all_sale = self.get_all_val_sale()
 
     def get_all_val_num(
