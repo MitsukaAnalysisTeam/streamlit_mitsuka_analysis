@@ -64,10 +64,10 @@ class LunchAnalysisCharts:
             legend=dict(
             orientation="h",
             yanchor="top",
-            y=-0.2, 
+            y=-0.2,
             xanchor="center",
             x=0.5
-        )
+        ),
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -119,9 +119,9 @@ class LunchAnalysisCharts:
             legend=dict(
             orientation="h",
             yanchor="top",
-            y=-0.2, 
+            y=-0.2,
             xanchor="center",
             x=0.5
-        )
+        ),
         )
         st.plotly_chart(fig, use_container_width=True)

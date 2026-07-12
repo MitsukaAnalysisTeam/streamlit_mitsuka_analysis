@@ -180,7 +180,7 @@ class RamenAnalysisCharts:
             title_text=f"【{time_filter}】{range_str} ラーメン{mode}割合",
             margin=dict(l=20, r=20, t=130, b=80),
             height=550,
-            legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5) # 凡例を下へ
+            legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5), # 凡例を下へ
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -261,10 +261,11 @@ class RamenAnalysisCharts:
             color_discrete_map = color_map
         )
         fig.update_layout(
-            xaxis=dict(title="曜日", categoryorder="array", categoryarray=self.WEEKDAY_ORDER),
+            xaxis=dict(title="曜日", categoryorder="array", categoryarray=self.WEEKDAY_ORDER, fixedrange=True),
             yaxis=dict(
                 title=y_label,
-                tickformat=",d" if mode == "売上" else None # 売上の時だけカンマ区切り
+                tickformat=",d" if mode == "売上" else None, # 売上の時だけカンマ区切り
+                fixedrange=True,
             ),
             legend=dict(title="メニュー", orientation="v", x=1.02, y=0.5),
             margin=dict(l=20, r=20, t=80, b=40),
