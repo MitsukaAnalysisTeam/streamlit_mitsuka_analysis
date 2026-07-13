@@ -62,7 +62,7 @@ class YearlyReportAnalysisCharts:
             plot_bgcolor="white",
             height=420,
         )
-        fig.update_xaxes(showgrid=False)
-        fig.update_yaxes(showgrid=True, gridcolor="#e9ecef")
+        fig.update_xaxes(showgrid=False, fixedrange=True)
+        fig.update_yaxes(showgrid=True, gridcolor="#e9ecef", fixedrange=True)
 
         st.plotly_chart(fig, use_container_width=True)

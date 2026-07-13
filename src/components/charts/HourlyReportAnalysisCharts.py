@@ -41,6 +41,7 @@ class HourlyReportAnalysisCharts:
                 tickprefix='¥',
                 showgrid=True,
                 gridcolor='#e0e0e0',
+                fixedrange=True,
             )
         else:
             yaxis_cfg = dict(
@@ -50,11 +51,12 @@ class HourlyReportAnalysisCharts:
                 ticksuffix='人',
                 showgrid=True,
                 gridcolor='#e0e0e0',
+                fixedrange=True,
             )
 
         fig.update_layout(
             barmode='group',
-            xaxis=dict(title='', tickfont=dict(size=14)),
+            xaxis=dict(title='', tickfont=dict(size=14), fixedrange=True),
             yaxis=yaxis_cfg,
             legend=dict(
                 orientation='h',

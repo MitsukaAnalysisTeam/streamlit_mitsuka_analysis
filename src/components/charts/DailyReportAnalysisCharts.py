@@ -71,11 +71,13 @@ class DailyReportAnalysisCharts:
                 tickprefix=y_tickprefix,
                 showgrid=True,
                 gridcolor='#e0e0e0',
+                fixedrange=True,
             ),
             xaxis=dict(
                 title='日',
                 tickangle=-28,
                 type='category',
+                fixedrange=True,
             ),
             legend=dict(
                 orientation='h',
@@ -114,11 +116,13 @@ class DailyReportAnalysisCharts:
                 tickprefix='¥',
                 showgrid=True,
                 gridcolor='#e0e0e0',
+                fixedrange=True,
             ),
             xaxis=dict(
                 title='日',
                 tickangle=-28,
                 type='category',
+                fixedrange=True,
             ),
             showlegend=True,
             legend=dict(orientation='h', y=1.02, x=1, xanchor='right', yanchor='bottom'),
@@ -164,7 +168,7 @@ class DailyReportAnalysisCharts:
             hovertemplate=hover_tmpl,
         ))
         fig.update_layout(
-            xaxis=dict(title="年/月(営業日数)", tickangle=-90, tickfont=dict(size=14)),
+            xaxis=dict(title="年/月(営業日数)", tickangle=-90, tickfont=dict(size=14), fixedrange=True),
             yaxis=dict(
                 title=y_title,
                 tickformat=',.0f',
@@ -172,6 +176,7 @@ class DailyReportAnalysisCharts:
                 tickfont=dict(size=14),
                 showgrid=True,
                 gridcolor='#e0e0e0',
+                fixedrange=True,
             ),
             showlegend=True,
             legend=dict(orientation='h', y=1.02, x=1, xanchor='right', yanchor='bottom'),
@@ -217,7 +222,7 @@ class DailyReportAnalysisCharts:
             hovertemplate=hover_tmpl,
         ))
         fig.update_layout(
-            xaxis=dict(title="年/月(営業日数)", tickangle=-90, tickfont=dict(size=14)),
+            xaxis=dict(title="年/月(営業日数)", tickangle=-90, tickfont=dict(size=14), fixedrange=True),
             yaxis=dict(
                 title=y_title,
                 tickformat=',.1f',
@@ -225,6 +230,7 @@ class DailyReportAnalysisCharts:
                 tickfont=dict(size=14),
                 showgrid=True,
                 gridcolor='#e0e0e0',
+                fixedrange=True,
             ),
             showlegend=True,
             legend=dict(orientation='h', y=1.02, x=1, xanchor='right', yanchor='bottom'),
@@ -272,8 +278,9 @@ class DailyReportAnalysisCharts:
                 tickvals=np.arange(0, len(df1.index), 1),
                 ticktext=df1.index.tolist(),
                 tickfont=dict(size=15),
+                fixedrange=True,
             ),
-            yaxis=dict(tickfont=dict(size=15), **yaxis_extra),
+            yaxis=dict(tickfont=dict(size=15), fixedrange=True, **yaxis_extra),
             title=f'{date1}と{date2}の{str1}の曜日別比較',
             barmode='group',
             showlegend=True,
