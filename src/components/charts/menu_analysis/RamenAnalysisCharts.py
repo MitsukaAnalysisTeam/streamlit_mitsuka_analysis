@@ -4,41 +4,17 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import pandas as pd
 
+from src.components.charts.menu_analysis.ColorPalette import color_for_label
+from src.components.charts.menu_analysis.PieUtils import (
+    OTHER_LABEL,
+    group_minor_slices,
+    legend_hint_annotation,
+    other_slice_legend_label,
+)
+
 
 class RamenAnalysisCharts:
     """昼・夜・深夜のラーメン分析グラフクラス"""
-
-    # ──────────────────────────────────────────
-    # メニュー共通カラーマップ
-    # ──────────────────────────────────────────
-    MENU_COLORS = {
-        # 味噌系
-        "白味噌":           "#C8A882",   # 濃い肌色
-        "赤味噌":           "#8B1A1A",   # 濃い赤
-        "辛味噌":           "#CC2200",   # 辛そうな赤
-        "焦がし味噌北海道": "#FFD700",   # 明るい黄色
-        "ベジ味噌":         "#6B8E6B",   # 草色（野菜）
-        "あさりと味噌":     "#7BA7BC",   # 青みがかった色（あさり）
-        # つけ麺系
-        "つけ麺8号":        "#4682B4",   # スチールブルー
-        "つけ麺6号":        "#C04000",   # 辛そうな赤
-        "カリーつけ麺":     "#E0B870",   # やや黄みがかった肌色
-        # カリー・海老系
-        "カリー":           "#C8860A",   # カレー色
-        "海老味噌カリー":   "#B06020",   # 海老味噌カリー
-        "担々麺":           "#C04000",   # 担々麺（橙赤）
-        "TOYONO":           "#9B7BB8",   # 紫系（独自色）
-        "イカスミ":         "#2C2C2C",   # 黒
-        "油そば":           "#5C3A1E",   # 醤油色（茶）
-        "和え玉":           "#32CD32",   # ライムグリーン
-        # 昼ランチ系
-        "海老みそ":         "#D4785A",   # 海老みそ（淡い海老色）
-        "焦がし海老味噌":   "#A0522D",   # 焦がし感（茶系）
-        "温玉カレーラーメン":"#D4A820",  # カレー黄
-        "シビ辛丼":         "#B03000",   # 辛そうな橙赤
-    }
-    # カラーマップにないメニューへのフォールバック用パレット
-    _FALLBACK_COLORS = px.colors.qualitative.Pastel
 
     TIME_COLORS = {
         "昼":   px.colors.qualitative.Pastel,
@@ -54,18 +30,9 @@ class RamenAnalysisCharts:
     # ──────────────────────────────────────────
     def _get_menu_color_list(self, labels: list[str]) -> list[str]:
         """
-        labels の順番に対応する色リストを返す。
-        MENU_COLORS に定義がないメニューはフォールバックパレットから順番に割り当てる。
+        labels の順番に対応する色リストを返す（メニュー名ごとに決定的な色）。
         """
-        colors = []
-        fallback_idx = 0
-        for label in labels:
-            if label in self.MENU_COLORS:
-                colors.append(self.MENU_COLORS[label])
-            else:
-                colors.append(self._FALLBACK_COLORS[fallback_idx % len(self._FALLBACK_COLORS)])
-                fallback_idx += 1
-        return colors
+        return [color_for_label(label) for label in labels]
 
     # ──────────────────────────────────────────
     # 内部ヘルパー：月範囲フィルタ
@@ -148,39 +115,51 @@ class RamenAnalysisCharts:
             # 降順ソート
             totals = totals.sort_values(ascending=False)
 
-            # 全体に占める割合が3%未満のスライスはラベルを非表示にしてlegendに逃がす
-            total_sum = totals.sum()
-            threshold = 0.03
-
-            visible_labels = [
-                lbl if (val / total_sum) >= threshold else ""
-                for lbl, val in zip(totals.index.tolist(), totals.values.tolist())
+            # 全体に占める割合が3%未満のスライスは「その他」に合算する
+            # （隣接スライスの色が判別しにくくなる・凡例が埋まりすぎるのを防ぐ）
+            other_legend_label = other_slice_legend_label(totals)
+            grouped = group_minor_slices(totals)
+            display_labels = grouped.index.tolist()
+            values = grouped.values.tolist()
+            # 凡例・ホバーには「その他」の中身を表示し、スライス上の文字は短いままにする
+            legend_labels = [
+                other_legend_label if lbl == OTHER_LABEL and other_legend_label else lbl
+                for lbl in display_labels
             ]
 
             fig.add_trace(
                 go.Pie(
-                    labels=totals.index.tolist(),
-                    values=totals.values.tolist(),
+                    labels=legend_labels,
+                    values=values,
+                    text=display_labels,
                     name=label,
-                    text=visible_labels,   
                     textinfo="text+percent",
+                    textfont=dict(size=11),
                     hovertemplate=f"%{{label}}<br>%{{value:,.0f}}{unit}<br>%{{percent}}<extra></extra>",
                     hole=0.3,
+                    sort=False, # 割合順の自動並び替えをしない（「その他」を必ず最後にするため）
                     rotation=0, # 0度スタート
                     direction="clockwise",
                     insidetextorientation="horizontal", # テキストを水平に
                     # メニュー共通カラー
-                    marker_colors=self._get_menu_color_list(totals.index.tolist()),
+                    marker_colors=self._get_menu_color_list(display_labels),
+                    # 円グラフ自体を上80%に収め、下20%をヒント表示用に空けておく
+                    domain=dict(y=[0.22, 1]),
                 ),
                 row=1, col=col_idx,
             )
-            
+
+        # make_subplotsの自動domain割り当てで上のdomain指定が上書きされないよう、
+        # トレース追加後に改めて明示する
+        fig.update_traces(domain=dict(y=[0.22, 1]))
+
         range_str = self._month_range_label(month_start, month_end) if month_start and month_end else ""
         fig.update_layout(
             title_text=f"【{time_filter}】{range_str} ラーメン{mode}割合",
-            margin=dict(l=20, r=20, t=130, b=80),
-            height=550,
-            legend=dict(orientation="h", yanchor="top", y=-0.2, xanchor="center", x=0.5), # 凡例を下へ
+            margin=dict(l=20, r=20, t=100, b=90),
+            height=720,
+            legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5), # 凡例を下へ
+            annotations=[legend_hint_annotation(y=0.02)], # 円グラフ(上80%)と凡例(マイナス側)の間の空白に配置
         )
         st.plotly_chart(fig, use_container_width=True)
 
@@ -245,8 +224,7 @@ class RamenAnalysisCharts:
             .fillna(0)
         )
 
-        color_map = {col: self.MENU_COLORS.get(col, self._FALLBACK_COLORS[i % len(self._FALLBACK_COLORS)])
-                     for i, col in enumerate(numeric_cols)}
+        color_map = {col: color_for_label(col) for col in numeric_cols}
 
         unit = "円" if mode == "売上" else "杯"
         y_label = f"{mode}合計 ({unit})" # 軸のタイトル用

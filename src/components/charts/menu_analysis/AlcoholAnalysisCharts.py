@@ -2,6 +2,8 @@ import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 
+from src.components.charts.menu_analysis.ColorPalette import colors_for_labels
+
 
 class AlcoholAnalysisCharts:
 
@@ -52,28 +54,27 @@ class AlcoholAnalysisCharts:
         )
         return fig
 
-    def wine_graph(self, data):
-        monthly_avg = self._monthly_avg_df(data, ["一升瓶ワイン", "ボトルワイン"])
-        fig = self._stacked_monthly_bar(monthly_avg, ["pink", "red"], "月毎の1日合計売上の推移")
+    def _graph_from_data(self, data: pd.DataFrame, title: str) -> None:
+        """dataの'日付'以外の列をそのままグラフの対象カテゴリとして描画する。
+
+        対象カテゴリの一覧はmenu.json側(flag)で決まるため、ここでは
+        dataに既に絞り込まれている列をそのまま使うだけで、カテゴリ名を
+        コード側に持たない。
+        """
+        cols = [c for c in data.columns if c != "日付"]
+        monthly_avg = self._monthly_avg_df(data, cols)
+        colors = colors_for_labels(cols)
+        fig = self._stacked_monthly_bar(monthly_avg, colors, title)
         st.plotly_chart(fig, use_container_width=True)
+
+    def wine_graph(self, data):
+        self._graph_from_data(data, "月毎の1日合計売上の推移")
 
     def akishika_graph(self, data):
-        cols = ["秋鹿", "ハイボール", "りんごカクテル", "りんごと熱燗", "梅酒", "敷島"]
-        monthly_avg = self._monthly_avg_df(data, cols)
-        colors = ["orange", "gold", "darkblue", "tomato", "limegreen", "purple"]
-        fig = self._stacked_monthly_bar(monthly_avg, colors, "月毎の1日合計売上・杯数の推移")
-        st.plotly_chart(fig, use_container_width=True)
+        self._graph_from_data(data, "月毎の1日合計売上・杯数の推移")
 
     def beer_graph(self, data):
-        cols = ["ドラフト", "リアル", "ボトル", "ハッピーアワー", "オリゼ", "ビール祭り", "スタッフ"]
-        monthly_avg = self._monthly_avg_df(data, cols)
-        colors = ["orange", "darkblue", "forestgreen", "darkkhaki", "brown", "pink", "dimgrey"]
-        fig = self._stacked_monthly_bar(monthly_avg, colors, "月毎の1日合計売上の推移")
-        st.plotly_chart(fig, use_container_width=True)
+        self._graph_from_data(data, "月毎の1日合計売上の推移")
 
     def alchol_graph(self, data):
-        cols = ["ビール", "秋鹿", "ワイン"]
-        monthly_avg = self._monthly_avg_df(data, cols)
-        colors = ["orange", "yellow", "purple"]
-        fig = self._stacked_monthly_bar(monthly_avg, colors, "月毎の1日合計売上の推移")
-        st.plotly_chart(fig, use_container_width=True)
+        self._graph_from_data(data, "月毎の1日合計売上の推移")
