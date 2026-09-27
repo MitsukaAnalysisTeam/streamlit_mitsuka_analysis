@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
 import japanize_matplotlib
-import src.components.utils.SpreadSheets as SpreadSheets
+import src.components.utils.common.SpreadSheets as SpreadSheets
 japanize_matplotlib.japanize()
 
-class GetByProductDf:
+class LoaderBefore202606:
     def __init__(self):
         self.df_all_num = self.get_all_val_num()
         self.df_all_sale = self.get_all_val_sale()
@@ -58,6 +58,5 @@ class GetByProductDf:
         df_dict = {}
         for key, value in json_dict.items():
             df_dict[key] = df_all[value].fillna(0).astype(int)
-        print(df_dict)
         return df_dict
         

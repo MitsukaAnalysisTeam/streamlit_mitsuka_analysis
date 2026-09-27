@@ -1,42 +1,44 @@
-import os
 import pandas as pd
-import streamlit as st
+
+from src.components.utils.menu_analysis.s2_classification.CategoryUnifyMap import CategoryUnifyMap
+
 
 class AlcoholAnalysisUtils:
+    def __init__(self, category_unify_map: CategoryUnifyMap = None):
+        self._category_unify_map = category_unify_map or CategoryUnifyMap()
+
+    def _columns_by_flag(self, flag: str) -> list:
+        return list(self._category_unify_map.items_by_flag(flag).keys())
+
     def get_wine_data(
             self,
             df: pd.DataFrame
-            )-> pd.DataFrame: 
-        
-        df = df[["日付","一升瓶ワイン","ボトルワイン"]]
-        return df
-    
+            )-> pd.DataFrame:
+        cols = self._columns_by_flag("4.3")
+        return df[["日付"] + cols]
+
 
     def get_akishika_data(
             self,
             df: pd.DataFrame
-            )-> pd.DataFrame: 
-        
-        df = df[["日付", "秋鹿", "ハイボール", "りんごカクテル", "りんごと熱燗", "梅酒", "敷島"]]
-        return df
+            )-> pd.DataFrame:
+        cols = self._columns_by_flag("4.2")
+        return df[["日付"] + cols]
 
     def get_beer_data(
             self,
             df: pd.DataFrame
-            )-> pd.DataFrame: 
-        
-        df = df[["日付", "ドラフト", "リアル", "ボトル", "ハッピーアワー", "オリゼ", "ビール祭り", "スタッフ"]]
-        return df
+            )-> pd.DataFrame:
+        cols = self._columns_by_flag("4.1")
+        return df[["日付"] + cols]
 
     def get_alchol_data(
-            sef,
+            self,
             data_type: str
             ) -> pd.DataFrame:
-        alcoholAnalysisUtils = AlcoholAnalysisUtils()
-
-        data_beer = alcoholAnalysisUtils.get_beer_data(data_type)
-        data_akishika = alcoholAnalysisUtils.get_akishika_data(data_type)
-        data_wine = alcoholAnalysisUtils.get_wine_data(data_type)
+        data_beer = self.get_beer_data(data_type)
+        data_akishika = self.get_akishika_data(data_type)
+        data_wine = self.get_wine_data(data_type)
 
         dates = data_beer["日付"]
 
@@ -53,14 +55,14 @@ class AlcoholAnalysisUtils:
         })
 
         return summary_df
-    
+
     def prepare_alcohol_df_num(self, df_dict: dict) -> pd.DataFrame:
         """
         カテゴリ別に集計済みのDataFrame辞書から、日々の売上合計を算出して
         一つのDataFrameにまとめる関数。
         """
-        alcohol_keys = self.__get_alcohol_list()
-        
+        alcohol_keys = self._columns_by_flag("4")
+
         alcohol_series_list = []
         for key in alcohol_keys:
             if key in df_dict:
@@ -76,28 +78,8 @@ class AlcoholAnalysisUtils:
 
         # リストに格納したすべてのSeriesを一度に連結する
         alcohol_df = pd.concat(alcohol_series_list, axis=1)
-        
+
         # NaN（対象の日に売上がなかった商品など）を0で埋める
         alcohol_df = alcohol_df.fillna(0)
 
         return alcohol_df
-    
-    def __get_alcohol_list(self):
-        alcohol_list = [
-            "ドラフト",
-            "リアル",
-            "ボトル",
-            "ハッピーアワー",
-            "オリゼ",
-            "ビール祭り",
-            "スタッフ",
-            "一升瓶ワイン",
-            "ボトルワイン",
-            "秋鹿",
-            "ハイボール",
-            "りんごカクテル",
-            "りんごと熱燗",
-            "梅酒",
-            "敷島"
-        ]
-        return alcohol_list

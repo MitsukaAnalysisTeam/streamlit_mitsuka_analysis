@@ -12,7 +12,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import streamlit as st
 
 import json
-import src.components.utils.SpreadSheets as SpreadSheets
+import src.components.utils.common.SpreadSheets as SpreadSheets
 
 japanize_matplotlib.japanize()
 

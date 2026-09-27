@@ -25,7 +25,7 @@ class SpreadSheets:
                 c = ServiceAccountCredentials.from_json_keyfile_dict(credentials_dict, scope)
         except Exception as e:
             # st.secrets が利用できなかった場合はローカルの JSON ファイルを使用
-            json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../data/config/mitsuka-streamlit-9d15df827484.json"))
+            json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../../data/config/mitsuka-streamlit-9d15df827484.json"))
             c = ServiceAccountCredentials.from_json_keyfile_name(json_path, scope)
 
         self.gs = gspread.authorize(c)

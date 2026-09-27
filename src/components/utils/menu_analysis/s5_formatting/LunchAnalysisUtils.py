@@ -6,31 +6,14 @@ from dateutil.relativedelta import relativedelta
 import japanize_matplotlib
 from oauth2client.service_account import ServiceAccountCredentials
 import streamlit as st
-import src.components.utils.SpreadSheets as SpreadSheets
+import src.components.utils.common.SpreadSheets as SpreadSheets
+from src.components.utils.menu_analysis.s2_classification.CategoryUnifyMap import CategoryUnifyMap
 japanize_matplotlib.japanize()
 
 class LunchAnalysisUtils:
-    def summarize_ramen_sales(self, df: pd.DataFrame, date: str) -> pd.Series:
-        """
-        指定した年と月の各商品の合計販売数を表示する関数
-        """
-        year = int(date[:4])
-        month = int(date.split('_')[1])
+    def __init__(self, category_unify_map: CategoryUnifyMap = None):
+        self._category_unify_map = category_unify_map or CategoryUnifyMap()
 
-        if not pd.api.types.is_datetime64_any_dtype(df.index):
-            df.index = pd.to_datetime(df.index)
-        target_df = df[(df.index.year == year) & (df.index.month == month)]
-        target_df = target_df.apply(pd.to_numeric, errors='coerce')
-        filtered_df = target_df.dropna(axis=1, how='all')
-        numeric_df = filtered_df.select_dtypes(include=["number"])
-        if numeric_df.empty:
-            print(f"No numeric data found for {year}-{month}")
-        
-        summary = numeric_df.sum()
-        
-        return summary
-
-        
     def get_month_list(self):
         now = datetime.now() - relativedelta(months=1)
         current_year = now.year
@@ -57,16 +40,12 @@ class LunchAnalysisUtils:
         カテゴリ別に集計済みのDataFrame辞書から、日々の売上合計を算出して
         一つのDataFrameにまとめる関数。
         """
-        ramen_keys = self.__get_ramen_list()
-        
         ramen_series_list = []
-        for key in ramen_keys:
-            if key in df_dict:
-                series_sum = df_dict[key].sum(axis=1).rename(key)
-                ramen_series_list.append(series_sum)
-            else:
-                # データがないカテゴリについては警告を出す（任意）
-                print(f"Warning: Category '{key}' not found in df_dict")
+        for key, df in df_dict.items():
+            if not self._category_unify_map.is_ramen(key):
+                continue
+            series_sum = df.sum(axis=1).rename(key)
+            ramen_series_list.append(series_sum)
 
         # データが一つもなかった場合は、空のDataFrameを返す
         if not ramen_series_list:
@@ -74,20 +53,8 @@ class LunchAnalysisUtils:
 
         # リストに格納したすべてのSeriesを一度に連結する
         ramen_df = pd.concat(ramen_series_list, axis=1)
-        
+
         # NaN（対象の日に売上がなかった商品など）を0で埋める
         ramen_df = ramen_df.fillna(0)
 
         return ramen_df
-
-    
-    def __get_ramen_list(self):
-        ramen_list = [
-            "カリー",
-            "カリーつけ麺",
-            "海老みそ",
-            "焦がし海老味噌",
-            "ベジ味噌",
-            "白味噌",
-        ]
-        return ramen_list
