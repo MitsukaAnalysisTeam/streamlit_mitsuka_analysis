@@ -57,6 +57,10 @@ class LoaderBefore202606:
         '''
         df_dict = {}
         for key, value in json_dict.items():
-            df_dict[key] = df_all[value].fillna(0).astype(int)
+            # value（menu.jsonのitem一覧）は新旧データソースの商品名が混在しており、
+            # 新データにしか存在しない商品名が旧シート由来のdf_allに無くKeyErrorになるため、
+            # 実在する列だけに絞る。
+            existing_columns = [v for v in value if v in df_all.columns]
+            df_dict[key] = df_all[existing_columns].fillna(0).astype(int)
         return df_dict
         
