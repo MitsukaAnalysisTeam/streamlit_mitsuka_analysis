@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
-import japanize_matplotlib
 import src.components.utils.common.SpreadSheets as SpreadSheets
-japanize_matplotlib.japanize()
 
 class LoaderBefore202606:
     def __init__(self):

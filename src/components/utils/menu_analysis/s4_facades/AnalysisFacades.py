@@ -8,9 +8,10 @@ from src.components.utils.menu_analysis.s3_transaction.FacadeMergeUtils import (
 from src.components.utils.menu_analysis.s3_transaction.RamenTransactionUtils import RamenTransactionUtils
 
 # ランチ分析ページ固有の表示ラベル調整（新旧カテゴリ名の統一自体はmenu.jsonが担う）
+# そのまま表示に含める「その他」カテゴリ（リネーム不要）
+_LUNCH_OTHER_CATEGORIES = ["発酵御膳", "キッズ"]
+# 表示名を変える必要がある「その他」カテゴリ
 _LUNCH_OTHER_CATEGORY_RENAME = {
-    "発酵御膳": "発酵御膳",
-    "キッズ": "キッズ",
     "唐揚げ定食": "発酵唐揚げプレート",
 }
 _LUNCH_SET_SOURCE_CATEGORY = "昼セット"
@@ -133,6 +134,10 @@ class LunchAnalysisFacade:
 
         if _LUNCH_SET_SOURCE_CATEGORY in base:
             result[_LUNCH_SET_TARGET_CATEGORY] = base[_LUNCH_SET_SOURCE_CATEGORY]
+
+        for category in _LUNCH_OTHER_CATEGORIES:
+            if category in base:
+                result[category] = base[category]
 
         for source_key, target_key in _LUNCH_OTHER_CATEGORY_RENAME.items():
             if source_key in base:

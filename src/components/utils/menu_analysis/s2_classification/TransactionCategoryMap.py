@@ -1,10 +1,11 @@
 import json
 import re
 
+from src.components.utils.menu_analysis.s2_classification.CategoryUnifyMap import UNCATEGORIZED
+
 
 class TransactionCategoryMap:
     _PATTERN = re.compile(r"^(.+?)\((.*)\)$")
-    UNCATEGORIZED = "未分類"
 
     def __init__(self, json_path: str = "data/json/menu.json"):
         with open(json_path, encoding="utf-8") as f:
@@ -28,4 +29,4 @@ class TransactionCategoryMap:
 
     def get_category(self, menu_name: str, variety: str) -> str:
         key = (self._normalize(menu_name), self._normalize(variety))
-        return self._map.get(key, self.UNCATEGORIZED)
+        return self._map.get(key, UNCATEGORIZED)
