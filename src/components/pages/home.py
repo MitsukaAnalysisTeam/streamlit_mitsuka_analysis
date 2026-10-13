@@ -6,7 +6,7 @@ import os
 
 # プロジェクトのルートディレクトリをモジュール検索パスに追加
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src.components.utils.SpreadSheets import SpreadSheets
+from src.components.utils.common.SpreadSheets import SpreadSheets
 
 
 def save_feedback(question):

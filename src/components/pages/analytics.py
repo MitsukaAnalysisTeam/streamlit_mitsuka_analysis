@@ -5,21 +5,30 @@ import numpy as np
 import sys
 # プロジェクトのルートディレクトリをモジュール検索パスに追加
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from src.components.charts.DailyReportAnalysisCharts import DailyReportAnalysisCharts
-from src.components.charts.HourlyReportAnalysisCharts import HourlyReportAnalysisCharts
-from src.components.utils.DailyReportAnalysisUtils import DailyReportAnalysisUtils
-from src.components.utils.HourlyReportAnalysisUtils import HourlyReportAnalysisUtils
-from src.components.utils.LunchAnalysisUtils import LunchAnalysisUtils
-from src.components.charts.LunchAnalysisCharts import LunchAnalysisCharts
-from src.components.utils.MidnightAnalysisUtils import MidnightAnalysisUtils
-from src.components.utils.DinerAnalysisUtils import DinerAnalysisUtils
-from src.components.charts.RamenAnalysisCharts import RamenAnalysisCharts
-from src.components.utils.AlcoholAnalysisUtils import AlcoholAnalysisUtils
-from src.components.charts.AlcoholAnalysisCharts import AlcoholAnalysisCharts
-from src.components.utils.GetByProductDf import GetByProductDf
-from src.components.utils.YearlyReportAnalysisUtils import YearlyReportAnalysisUtils
-from src.components.charts.YearlyReportAnalysisCharts import YearlyReportAnalysisCharts
-from src.components.utils.Json import read_json_file
+from src.components.charts.daily_report.DailyReportAnalysisCharts import DailyReportAnalysisCharts
+from src.components.charts.daily_report.HourlyReportAnalysisCharts import HourlyReportAnalysisCharts
+from src.components.utils.daily_report.DailyReportAnalysisUtils import DailyReportAnalysisUtils
+from src.components.utils.daily_report.HourlyReportAnalysisUtils import HourlyReportAnalysisUtils
+from src.components.utils.menu_analysis.s5_formatting.LunchAnalysisUtils import LunchAnalysisUtils
+from src.components.charts.menu_analysis.LunchAnalysisCharts import LunchAnalysisCharts
+from src.components.utils.menu_analysis.s5_formatting.MidnightAnalysisUtils import MidnightAnalysisUtils
+from src.components.utils.menu_analysis.s5_formatting.DinerAnalysisUtils import DinerAnalysisUtils
+from src.components.charts.menu_analysis.RamenAnalysisCharts import RamenAnalysisCharts
+from src.components.utils.menu_analysis.s5_formatting.AlcoholAnalysisUtils import AlcoholAnalysisUtils
+from src.components.charts.menu_analysis.AlcoholAnalysisCharts import AlcoholAnalysisCharts
+from src.components.utils.menu_analysis.s1_data_sources.LoaderBefore202606 import LoaderBefore202606
+from src.components.utils.daily_report.YearlyReportAnalysisUtils import YearlyReportAnalysisUtils
+from src.components.charts.daily_report.YearlyReportAnalysisCharts import YearlyReportAnalysisCharts
+from src.components.utils.common.Json import read_json_file
+from src.components.utils.menu_analysis.s4_facades.AnalysisFacades import (
+    RamenAnalysisFacade,
+    LunchAnalysisFacade,
+    AlcoholAnalysisFacade,
+)
+from src.components.utils.menu_analysis.s2_classification.CategoryUnifyMap import CategoryUnifyMap
+from src.components.utils.menu_analysis.s1_data_sources.LoaderAfter202606 import LoaderAfter202606
+from src.components.utils.menu_analysis.s3_transaction.RamenTransactionUtils import RamenTransactionUtils
+from src.components.utils.menu_analysis.s3_transaction.AlcoholTransactionUtils import AlcoholTransactionUtils
 
 """
 インスタンス化は一回だけにする
@@ -76,8 +85,22 @@ def get_alcohol_analysis_charts() -> AlcoholAnalysisCharts:
     return AlcoholAnalysisCharts()
 
 @st.cache_resource
-def get_by_product_df() -> GetByProductDf:
-    return GetByProductDf()
+def get_by_product_df() -> LoaderBefore202606:
+    return LoaderBefore202606()
+
+@st.cache_resource
+def get_loader_after_202606() -> LoaderAfter202606:
+    return LoaderAfter202606()
+
+@st.cache_resource
+def get_ramen_transaction_utils() -> RamenTransactionUtils:
+    # RamenAnalysisFacade/LunchAnalysisFacadeの両方でこの1個を使い回し、
+    # 「会計別_全期間まとめ」スプレッドシートの取得を1回で済ませる。
+    return RamenTransactionUtils(loader=get_loader_after_202606())
+
+@st.cache_resource
+def get_alcohol_transaction_utils() -> AlcoholTransactionUtils:
+    return AlcoholTransactionUtils(loader=get_loader_after_202606())
 
 @st.cache_resource
 def get_yearly_report_analysis_utils() -> YearlyReportAnalysisUtils:
@@ -93,15 +116,17 @@ def get_lunch_json():
 
 @st.cache_resource
 def get_midnight_json():
-    return read_json_file(filepath='data/json/深夜限定.json')
+    return read_json_file(filepath='data/json/midnight.json')
 
 @st.cache_resource
 def get_diner_json():
-    return read_json_file(filepath='data/json/ディナー.json')
+    return read_json_file(filepath='data/json/diner.json')
 
 @st.cache_resource
 def get_alcohol_json():
-    return read_json_file(filepath='data/json/alcohol.json')
+    # alcohol.jsonは廃止。アルコールは時間帯フィルタが不要なため（AlcoholAnalysisFacade参照）、
+    # menu.json（旧シート1.json）からflag(alcohol="4")のカテゴリを集約して代替する。
+    return CategoryUnifyMap().items_by_flag("4")
 
 # ここでキャッシュされたインスタンスをグローバル変数に格納（実際の関数内でも取得可能）
 dailyReportAnalysisUtils = get_daily_report_analysis_utils()
@@ -118,12 +143,30 @@ alcoholAnalysisCharts = get_alcohol_analysis_charts()
 getByProductDf = get_by_product_df()
 yearlyReportAnalysisUtils = get_yearly_report_analysis_utils()
 yearlyReportAnalysisCharts = get_yearly_report_analysis_charts()
+ramenTransactionUtils = get_ramen_transaction_utils()
+alcoholTransactionUtils = get_alcohol_transaction_utils()
 
 # キャッシュ済みのJSONデータをグローバル変数に格納
 lunch_json    = get_lunch_json()
 midnight_json = get_midnight_json()
 diner_json    = get_diner_json()
 alcohol_json  = get_alcohol_json()
+
+# 会計別データ(2026-06-01〜)と旧データを結合するFacade
+# ramen_transaction_utils/alcohol_transaction_utilsは明示的に共有インスタンスを渡し、
+# 「会計別_全期間まとめ」スプレッドシートの取得が複数箇所で重複しないようにする
+ramenAnalysisFacade = RamenAnalysisFacade(
+    getByProductDf, lunch_json, diner_json, midnight_json,
+    ramen_transaction_utils=ramenTransactionUtils,
+)
+lunchAnalysisFacade = LunchAnalysisFacade(
+    getByProductDf, lunch_json,
+    ramen_transaction_utils=ramenTransactionUtils,
+)
+alcoholAnalysisFacade = AlcoholAnalysisFacade(
+    getByProductDf, alcohol_json,
+    alcohol_transaction_utils=alcoholTransactionUtils,
+)
 
 
 def show():
@@ -401,15 +444,10 @@ def ramen_analysis():
             option_month_start, option_month_end = option_month_end, option_month_start
 
 
-        # モードに応じてベースとなるDataFrameを切り替え
-        if analysis_mode == "売上":
-            df_base = getByProductDf.df_all_sale
-        else:
-            df_base = getByProductDf.df_all_num
-
-        dict_lunch = getByProductDf.json_to_df_dict(df_all=df_base, json_dict=lunch_json)
-        dict_midnight = getByProductDf.json_to_df_dict(df_all=df_base, json_dict=midnight_json)
-        dict_diner = getByProductDf.json_to_df_dict(df_all=df_base, json_dict=diner_json)
+        # 会計別データ(2026-06-01〜)と旧データを結合したdf_dictを時間帯ごとに取得
+        dict_lunch = ramenAnalysisFacade.get_slot_dict("昼", analysis_mode)
+        dict_midnight = ramenAnalysisFacade.get_slot_dict("深夜", analysis_mode)
+        dict_diner = ramenAnalysisFacade.get_slot_dict("夜", analysis_mode)
 
         df_lunch = lunchAnalysisUtils.prepare_ramen_df_num(dict_lunch)
         df_midnight = midnightAnalysisUtils.prepare_midnight_df_num(dict_midnight)
@@ -449,20 +487,8 @@ def lunch_ramen_analysis():
         mode = st.radio("集計モード", ["販売数", "売上"], horizontal=True)
 
     # --- データ準備 ---
-    # 数量データ
-    df_val_num = getByProductDf.df_all_num
-    df_val_num_dict = getByProductDf.json_to_df_dict(
-        df_all=df_val_num, json_dict=lunch_json
-    )
-
-    # 売上データ
-    df_sale_num = getByProductDf.df_all_sale
-    df_val_sale_dict = getByProductDf.json_to_df_dict(
-        df_all=df_sale_num, json_dict=lunch_json
-    )
-
-    # モードによって渡す辞書を切り替える
-    target_dict = df_val_sale_dict if mode == "売上" else df_val_num_dict
+    # 会計別データ(2026-06-01〜)と旧データを結合したdf_dictをモードに応じて取得
+    target_dict = lunchAnalysisFacade.get_lunch_dict(mode)
     
     # 単位のラベル（任意でグラフに渡すと親切です）
     unit = "円" if mode == "売上" else "個/杯"
@@ -487,9 +513,8 @@ def alchohol_analysis():
         # グラフ表示
         st.write(f'月単位の{option_alcohol}データ')
 
-        # 毎回「平均杯数」と「合計売上」を計算するのではなく、選択に応じて準備しておくことで効率化
-        df_val = getByProductDf.df_all_num if option_daily == "平均杯数" else getByProductDf.df_all_sale
-        df_dict = getByProductDf.json_to_df_dict(df_all=df_val, json_dict=alcohol_json)
+        # 会計別データ(2026-06-01〜)と旧データを結合したdf_dictを取得
+        df_dict = alcoholAnalysisFacade.get_alcohol_dict(option_daily)
         df_data = alcoholAnalysisUtils.prepare_alcohol_df_num(df_dict).reset_index()
         
         # ifの入れ子構造がなくなり、簡潔に
