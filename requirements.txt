@@ -1,5 +1,5 @@
 streamlit
-pandas
+pandas>=2.2
 numpy
 matplotlib
 japanize-matplotlib
@@ -11,3 +11,7 @@ plotly
 google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
+# eMudhra(emSign)CA鍵漏洩への対応: emSign ECC Root CA - G3 を除去した版以降
+certifi>=2026.10.19
+# japanize-matplotlibがPython 3.12で削除されたdistutilsを使うため
+setuptools
