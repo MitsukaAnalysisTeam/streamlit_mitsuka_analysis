@@ -1,4 +1,4 @@
-"""dataset.jsonl のラベルが、チャートカタログの語彙に収まっているかを検査する。
+"""dataset.jsonl のラベルが、チャートカタログ（src/components/assistant/catalog.py）に収まっているかを検査する。
 
 使い方: python benchmarks/nl_chart/validate_dataset.py
 """
@@ -7,42 +7,19 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from src.components.assistant.catalog import CATALOG, HIGHLIGHTS as _HL, validate_request  # noqa: E402
+
 DATASET = Path(__file__).with_name("dataset.jsonl")
 
-DAILY_COLUMNS = ["売上(昼)", "客数(昼)", "客単価(昼)", "売上(夜)", "客数(夜)", "客単価(夜)",
-                 "1日総売上", "1日総客数", "1日客単価"]
-WEEKDAYS = ["全体", "水", "木", "金", "土", "日"]
-
-# chart_id -> {引数名: 取りうる値}。期間は args に含めず、period で別に持つ
-CATALOG = {
-    "daily_bar": {"metric": ["売上", "客数", "客単価"]},
-    "hourly_bar": {"metric": ["売上", "客数"], "weekday": WEEKDAYS},
-    "hourly_compare": {"metric": ["売上", "客数"], "weekday_a": WEEKDAYS, "weekday_b": WEEKDAYS},
-    "monthly_sum": {"item": [c for c in DAILY_COLUMNS if "客単価" not in c]},
-    "monthly_mean": {"item": DAILY_COLUMNS},
-    "weekly_compare": {"item": DAILY_COLUMNS},
-    "yearly_bar": {"metric": ["合計客数", "合計売上", "平均客数", "平均売上", "平均客単価"]},
-    "ramen_pie": {"slot": ["昼", "夜", "深夜", "全体"], "mode": ["販売数", "売上"]},
-    "ramen_weekday_bar": {"slot": ["昼", "夜", "深夜", "全体"], "mode": ["販売数", "売上"]},
-    "lunch_pie": {"breakdown": ["カテゴリ別", "セットメニュー内訳"], "mode": ["販売数", "売上"]},
-    "alcohol_trend": {"kind": ["アルコール合計", "ビール", "秋鹿", "若尾ワイン"],
-                      "metric": ["平均杯数", "合計売上"]},
-}
-HIGHLIGHTS = {"max", "min", "biggest_change", "none"}
+HIGHLIGHTS = set(_HL)
 ACTIONS = {"run", "ask_back", "reject"}
 
 
 def check_request(where, chart_id, args, errors):
-    if chart_id not in CATALOG:
-        errors.append(f"{where}: 未知の chart_id {chart_id!r}")
-        return
-    spec = CATALOG[chart_id]
-    if set(args or {}) != set(spec):
-        errors.append(f"{where}: 引数名が {sorted(spec)} と一致しない: {sorted(args or {})}")
-        return
-    for name, value in args.items():
-        if value not in spec[name]:
-            errors.append(f"{where}: {chart_id}.{name} に範囲外の値 {value!r}")
+    problem = validate_request(chart_id, args or {})
+    if problem:
+        errors.append(f"{where}: {problem}")
 
 
 def main():
