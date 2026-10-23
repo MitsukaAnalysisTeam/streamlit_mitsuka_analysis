@@ -68,7 +68,7 @@ analysis_streamlit/
 5. `@st.cache_resource`で各Utils/Chartsクラスをキャッシュし、Googleスプレッドシートへの重複アクセスを防止
 
 ## 使用技術
-- Python 3.10 / 3.11
+- Python 3.14（`.python-version`参照）
 - Streamlit（ダッシュボード）
 - Pandas / NumPy（データ処理）
 - Plotly（グラフ描画）

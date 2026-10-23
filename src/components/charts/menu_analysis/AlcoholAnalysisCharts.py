@@ -12,8 +12,8 @@ class AlcoholAnalysisCharts:
         data["日付"] = pd.to_datetime(data["日付"], format='mixed')
         data.set_index("日付", inplace=True)
 
-        monthly_sum = data.resample('M')[cols].sum()
-        business_days = data.resample('M')[cols].count()
+        monthly_sum = data.resample('ME')[cols].sum()
+        business_days = data.resample('ME')[cols].count()
         monthly_avg = monthly_sum / business_days
         monthly_avg.index = monthly_avg.index.to_series().dt.strftime('%Y_%m')
         return monthly_avg
