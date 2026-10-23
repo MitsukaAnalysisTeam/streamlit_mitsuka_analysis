@@ -57,7 +57,7 @@
   <text x="755" y="272" font-size="14" font-weight="bold" fill="#b86a0a">低(自信がない)</text>
   <rect x="610" y="300" width="260" height="90" rx="10" fill="#fde5c8" stroke="#e08a1e" stroke-width="3" stroke-dasharray="8 5"/>
   <text x="740" y="334" font-size="20" font-weight="bold" text-anchor="middle" fill="#222">LLM が代わりに判断</text>
-  <text x="740" y="358" font-size="14" text-anchor="middle" fill="#444">Claude Haiku 5.5(ツールコーリング)</text>
+  <text x="740" y="358" font-size="14" text-anchor="middle" fill="#444">GPT-6 Luna(ツールコーリング)</text>
   <text x="740" y="377" font-size="13" text-anchor="middle" fill="#444">自信がないときだけ使う</text>
   <polyline points="870,345 990,345 990,207" fill="none" stroke="#e08a1e" stroke-width="3" stroke-dasharray="8 5" marker-end="url(#a)"/>
   <text x="1000" y="300" font-size="13" fill="#b86a0a">カタログで検証OK</text>

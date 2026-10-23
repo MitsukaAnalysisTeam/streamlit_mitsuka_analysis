@@ -14,7 +14,7 @@
 
   <!-- LLM -->
   <rect x="290" y="95" width="300" height="130" rx="10" fill="#fde5c8" stroke="#e08a1e" stroke-width="3" stroke-dasharray="8 5"/>
-  <text x="440" y="130" font-size="20" font-weight="bold" text-anchor="middle" fill="#222">LLM(Claude Haiku 5.5)</text>
+  <text x="440" y="130" font-size="20" font-weight="bold" text-anchor="middle" fill="#222">LLM(GPT-6 Luna)</text>
   <text x="440" y="156" font-size="14" text-anchor="middle" fill="#444">チャートカタログをツール定義として渡す</text>
   <text x="440" y="178" font-size="14" text-anchor="middle" fill="#444">effort: low(思考は最小限)</text>
   <text x="440" y="204" font-size="14" text-anchor="middle" fill="#444">質問 + 直前の指定を入力</text>

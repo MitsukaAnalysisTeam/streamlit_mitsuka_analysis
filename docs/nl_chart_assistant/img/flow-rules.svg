@@ -38,7 +38,7 @@
   <text x="885" y="260" font-size="14" text-anchor="middle" fill="#444">→ 実行 / 聞き返し / 対応外</text>
   <rect x="1070" y="168" width="190" height="116" rx="10" fill="#fde5c8" stroke="#e08a1e" stroke-width="2" stroke-dasharray="8 5"/>
   <text x="1165" y="218" font-size="22" font-weight="bold" text-anchor="middle" fill="#222">LLM</text>
-  <text x="1165" y="246" font-size="14" text-anchor="middle" fill="#444">Claude Haiku 5.5</text>
+  <text x="1165" y="246" font-size="14" text-anchor="middle" fill="#444">GPT-6 Luna</text>
 
   <line x1="340" y1="284" x2="340" y2="306" stroke="#888" stroke-width="2" marker-end="url(#a)"/>
   <text x="352" y="301" font-size="13" fill="#777">当てはまらなければ次へ</text>

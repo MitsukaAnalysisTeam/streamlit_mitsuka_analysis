@@ -415,3 +415,21 @@ def parse_tool_call(name: str, tool_input: Dict[str, Any]) -> Prediction:
     if pred.highlight not in HIGHLIGHTS:
         pred.invalid = pred.invalid or f"highlight が範囲外: {pred.highlight!r}"
     return pred
+
+
+# ---------------------------------------------------------------- 保存した応答から Prediction を作り直す
+
+
+def prediction_from_raw(kind: str, raw: Dict[str, Any]) -> Prediction:
+    """保存した生の応答（run.py の `raw`）から Prediction を作る。しきい値は後から route() で変えられる。"""
+    if kind == "jev":
+        return assemble_judge_prediction(parse_jev_response(raw))
+    if kind == "decisions":
+        return assemble_judge_prediction(parse_decisions_response(raw))
+    if kind in ("claude", "openai"):
+        if raw.get("stop_reason") == "refusal":
+            return Prediction(refused=True)
+        if not raw.get("tool"):
+            return Prediction(invalid="ツールが呼ばれなかった")
+        return parse_tool_call(raw["tool"], raw["input"] or {})
+    raise ValueError(f"unknown kind: {kind}")
