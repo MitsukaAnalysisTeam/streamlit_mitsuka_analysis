@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 540" width="1280" height="540" font-family="Hiragino Sans, Noto Sans JP, Yu Gothic, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="540" fill="#ffffff"/>
+
+  <!-- 見出し -->
+  <text x="340" y="30" font-size="18" font-weight="bold" text-anchor="middle" fill="#444">Jev の判断結果(上から順に判定)</text>
+  <text x="885" y="30" font-size="18" font-weight="bold" text-anchor="middle" fill="#444">どうする</text>
+  <text x="1165" y="30" font-size="18" font-weight="bold" text-anchor="middle" fill="#444">誰が</text>
+
+  <!-- Row 1: 対応外 -->
+  <rect x="20" y="48" width="640" height="96" rx="10" fill="#f7f7f7" stroke="#999" stroke-width="2"/>
+  <text x="40" y="82" font-size="21" font-weight="bold" fill="#222">① 「データで答えられる」確率が低い(&lt; 0.2)</text>
+  <text x="40" y="112" font-size="16" fill="#555">例: 「明日の天気は?」「来月の売上を予測して」</text>
+  <line x1="660" y1="96" x2="718" y2="96" stroke="#555" stroke-width="3" marker-end="url(#a)"/>
+  <rect x="720" y="48" width="330" height="96" rx="10" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="2"/>
+  <text x="885" y="104" font-size="22" font-weight="bold" text-anchor="middle" fill="#222">対応外と返す</text>
+  <rect x="1070" y="48" width="190" height="96" rx="10" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="2"/>
+  <text x="1165" y="88" font-size="22" font-weight="bold" text-anchor="middle" fill="#222">Jev のみ</text>
+  <text x="1165" y="116" font-size="14" text-anchor="middle" fill="#444">LLM は呼ばない</text>
+
+  <line x1="340" y1="144" x2="340" y2="166" stroke="#888" stroke-width="2" marker-end="url(#a)"/>
+  <text x="352" y="161" font-size="13" fill="#777">当てはまらなければ次へ</text>
+
+  <!-- Row 2: LLM -->
+  <rect x="20" y="168" width="640" height="116" rx="10" fill="#f7f7f7" stroke="#999" stroke-width="2"/>
+  <text x="40" y="200" font-size="21" font-weight="bold" fill="#222">② 判断に自信がない</text>
+  <text x="40" y="226" font-size="16" fill="#333">・最も弱い confidence が &lt; 0.5</text>
+  <text x="40" y="248" font-size="16" fill="#333">・または「答えられる」確率が 0.2〜0.5(微妙)</text>
+  <text x="40" y="272" font-size="15" fill="#555">例: 言い回しが特殊 / 複数の意味に取れる / 想定外の組み合わせ</text>
+  <line x1="660" y1="226" x2="718" y2="226" stroke="#e08a1e" stroke-width="3" stroke-dasharray="8 5" marker-end="url(#a)"/>
+  <rect x="720" y="168" width="330" height="116" rx="10" fill="#fde5c8" stroke="#e08a1e" stroke-width="2" stroke-dasharray="8 5"/>
+  <text x="885" y="212" font-size="22" font-weight="bold" text-anchor="middle" fill="#222">LLM に回す</text>
+  <text x="885" y="240" font-size="14" text-anchor="middle" fill="#444">ツール呼び出し → カタログで検証</text>
+  <text x="885" y="260" font-size="14" text-anchor="middle" fill="#444">→ 実行 / 聞き返し / 対応外</text>
+  <rect x="1070" y="168" width="190" height="116" rx="10" fill="#fde5c8" stroke="#e08a1e" stroke-width="2" stroke-dasharray="8 5"/>
+  <text x="1165" y="218" font-size="22" font-weight="bold" text-anchor="middle" fill="#222">LLM</text>
+  <text x="1165" y="246" font-size="14" text-anchor="middle" fill="#444">GPT-6 Luna</text>
+
+  <line x1="340" y1="284" x2="340" y2="306" stroke="#888" stroke-width="2" marker-end="url(#a)"/>
+  <text x="352" y="301" font-size="13" fill="#777">当てはまらなければ次へ</text>
+
+  <!-- Row 3: 聞き返し -->
+  <rect x="20" y="308" width="640" height="96" rx="10" fill="#f7f7f7" stroke="#999" stroke-width="2"/>
+  <text x="40" y="342" font-size="21" font-weight="bold" fill="#222">③ 最も弱い confidence が 0.5〜0.8</text>
+  <text x="40" y="372" font-size="16" fill="#555">例: 「売上見せて」→ 売上ということは分かるが、どのグラフか決めきれない</text>
+  <line x1="660" y1="356" x2="718" y2="356" stroke="#555" stroke-width="3" marker-end="url(#a)"/>
+  <rect x="720" y="308" width="330" height="96" rx="10" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="2"/>
+  <text x="885" y="352" font-size="22" font-weight="bold" text-anchor="middle" fill="#222">聞き返す</text>
+  <text x="885" y="378" font-size="14" text-anchor="middle" fill="#444">Jev の上位候補を選択肢として見せる</text>
+  <rect x="1070" y="308" width="190" height="96" rx="10" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="2"/>
+  <text x="1165" y="348" font-size="22" font-weight="bold" text-anchor="middle" fill="#222">Jev のみ</text>
+  <text x="1165" y="376" font-size="14" text-anchor="middle" fill="#444">LLM は呼ばない</text>
+
+  <line x1="340" y1="404" x2="340" y2="426" stroke="#888" stroke-width="2" marker-end="url(#a)"/>
+  <text x="352" y="421" font-size="13" fill="#777">当てはまらなければ次へ</text>
+
+  <!-- Row 4: 実行 -->
+  <rect x="20" y="428" width="640" height="96" rx="10" fill="#f7f7f7" stroke="#999" stroke-width="2"/>
+  <text x="40" y="462" font-size="21" font-weight="bold" fill="#222">④ 最も弱い confidence が 0.8 以上</text>
+  <text x="40" y="492" font-size="16" fill="#555">例: 「先月のランチの売上を円グラフで」</text>
+  <line x1="660" y1="476" x2="718" y2="476" stroke="#3a9b5c" stroke-width="4" marker-end="url(#a)"/>
+  <rect x="720" y="428" width="330" height="96" rx="10" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="3"/>
+  <text x="885" y="472" font-size="22" font-weight="bold" text-anchor="middle" fill="#222">そのまま実行</text>
+  <text x="885" y="498" font-size="14" text-anchor="middle" fill="#444">データ取得 → 強調候補 → 描画</text>
+  <rect x="1070" y="428" width="190" height="96" rx="10" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="2"/>
+  <text x="1165" y="468" font-size="22" font-weight="bold" text-anchor="middle" fill="#222">Jev のみ</text>
+  <text x="1165" y="496" font-size="14" text-anchor="middle" fill="#444">いちばん多いケース</text>
+</svg>

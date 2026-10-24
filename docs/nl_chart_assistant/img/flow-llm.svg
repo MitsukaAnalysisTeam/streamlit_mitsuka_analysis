@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 420" width="1280" height="420" font-family="Hiragino Sans, Noto Sans JP, Yu Gothic, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="420" fill="#ffffff"/>
+
+  <!-- Jev が自信なし -->
+  <rect x="20" y="110" width="220" height="100" rx="10" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="2"/>
+  <text x="130" y="148" font-size="19" font-weight="bold" text-anchor="middle" fill="#222">Jev が自信なし</text>
+  <text x="130" y="174" font-size="14" text-anchor="middle" fill="#444">confidence &lt; 0.5</text>
+  <text x="130" y="194" font-size="14" text-anchor="middle" fill="#444">など(前スライドの②)</text>
+
+  <!-- LLM -->
+  <rect x="290" y="95" width="300" height="130" rx="10" fill="#fde5c8" stroke="#e08a1e" stroke-width="3" stroke-dasharray="8 5"/>
+  <text x="440" y="130" font-size="20" font-weight="bold" text-anchor="middle" fill="#222">LLM(GPT-6 Luna)</text>
+  <text x="440" y="156" font-size="14" text-anchor="middle" fill="#444">チャートカタログをツール定義として渡す</text>
+  <text x="440" y="178" font-size="14" text-anchor="middle" fill="#444">effort: low(思考は最小限)</text>
+  <text x="440" y="204" font-size="14" text-anchor="middle" fill="#444">質問 + 直前の指定を入力</text>
+
+  <!-- ツール呼び出し -->
+  <rect x="640" y="110" width="220" height="100" rx="10" fill="#fde5c8" stroke="#e08a1e" stroke-width="2"/>
+  <text x="750" y="146" font-size="19" font-weight="bold" text-anchor="middle" fill="#222">ツール呼び出し</text>
+  <text x="750" y="170" font-size="14" text-anchor="middle" fill="#444">chart_id + 引数</text>
+  <text x="750" y="188" font-size="13" text-anchor="middle" fill="#444">聞き返し・対応外の</text>
+  <text x="750" y="204" font-size="13" text-anchor="middle" fill="#444">ツールも用意する</text>
+
+  <!-- 検証 -->
+  <polygon points="1010,85 1130,160 1010,235 890,160" fill="#dbe8fb" stroke="#4a7fd4" stroke-width="2"/>
+  <text x="1010" y="152" font-size="18" font-weight="bold" text-anchor="middle" fill="#222">カタログで検証</text>
+  <text x="1010" y="174" font-size="13" text-anchor="middle" fill="#444">IDが存在・引数が範囲内?</text>
+
+  <!-- 矢印 -->
+  <line x1="240" y1="160" x2="288" y2="160" stroke="#e08a1e" stroke-width="3" marker-end="url(#a)"/>
+  <line x1="590" y1="160" x2="638" y2="160" stroke="#555" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="860" y1="160" x2="888" y2="160" stroke="#555" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <!-- OK -->
+  <line x1="1130" y1="160" x2="1180" y2="160" stroke="#3a9b5c" stroke-width="3.5"/>
+  <line x1="1180" y1="160" x2="1180" y2="288" stroke="#3a9b5c" stroke-width="3.5" marker-end="url(#a)"/>
+  <text x="1140" y="150" font-size="15" font-weight="bold" fill="#2a7a45">OK</text>
+  <rect x="1085" y="290" width="190" height="70" rx="10" fill="#dbe8fb" stroke="#4a7fd4" stroke-width="2"/>
+  <text x="1180" y="322" font-size="19" font-weight="bold" text-anchor="middle" fill="#222">実行</text>
+  <text x="1180" y="346" font-size="14" text-anchor="middle" fill="#444">通常フローの④へ</text>
+
+  <!-- NG -->
+  <line x1="1010" y1="235" x2="1010" y2="288" stroke="#c0392b" stroke-width="3" marker-end="url(#a)"/>
+  <text x="1022" y="266" font-size="15" font-weight="bold" fill="#a83226">NG</text>
+  <rect x="890" y="290" width="190" height="70" rx="10" fill="#fbe0dc" stroke="#c0392b" stroke-width="2"/>
+  <text x="985" y="322" font-size="19" font-weight="bold" text-anchor="middle" fill="#222">実行しない</text>
+  <text x="985" y="346" font-size="14" text-anchor="middle" fill="#444">対応外として返す</text>
+
+  <!-- 補足 -->
+  <text x="20" y="300" font-size="16" fill="#333">LLM の出力も、そのままは実行しない。</text>
+  <text x="20" y="326" font-size="16" fill="#333">存在しないグラフ ID や範囲外の引数は、必ずここで弾く。</text>
+  <text x="20" y="352" font-size="16" fill="#333">LLM が「聞き返し」「対応外」を選んだ場合は、そのままユーザーに返す。</text>
+
+  <!-- 凡例 -->
+  <rect x="20" y="385" width="18" height="18" rx="3" fill="#dbe8fb" stroke="#4a7fd4" stroke-width="2"/>
+  <text x="46" y="400" font-size="14" fill="#222">コード</text>
+  <rect x="130" y="385" width="18" height="18" rx="3" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="2"/>
+  <text x="156" y="400" font-size="14" fill="#222">Jev</text>
+  <rect x="220" y="385" width="18" height="18" rx="3" fill="#fde5c8" stroke="#e08a1e" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="246" y="400" font-size="14" fill="#222">LLM</text>
+</svg>
