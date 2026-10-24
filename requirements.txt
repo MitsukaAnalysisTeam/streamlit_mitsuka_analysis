@@ -11,3 +11,5 @@ plotly
 google-api-python-client
 google-auth-httplib2
 google-auth-oauthlib
+setuptools
+certifi>=2026.10.19
