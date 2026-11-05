@@ -4,7 +4,7 @@ import os
 
 # プロジェクトのルートディレクトリをモジュール検索パスに追加
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from components.pages import home, analytics
+from components.pages import home, analytics, assistant_demo
 
 # サイドバーにページ選択メニューを作成
 st.sidebar.title("ナビゲーション")
@@ -19,7 +19,8 @@ page = st.sidebar.radio(
         "ラーメン",
         "ランチ分析",
         "アルコール",
-        "年間分析"
+        "年間分析",
+        "AIに聞く（デモ）",
     ]
 )
 
@@ -59,3 +60,7 @@ elif page == "ランチ分析":
 elif page == "アルコール":
     st.title("みつか坊主 - アルコール")
     analytics.alchohol_analysis()
+
+elif page == "AIに聞く（デモ）":
+    st.title("みつか坊主 - AIに聞く（デモ）")
+    assistant_demo.show()

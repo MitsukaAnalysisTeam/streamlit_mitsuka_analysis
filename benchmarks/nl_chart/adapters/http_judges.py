@@ -15,7 +15,22 @@ Post = Callable[[str, Dict[str, str], Dict[str, Any]], Dict[str, Any]]
 JEV_URL = "https://api.typesafe.ai/v1/systemone"
 DECISIONS_URL = "https://api.openai.com/v1/decisions"
 
-_RETRY_STATUS = {429, 500, 502, 503, 504}
+_RETRY_STATUS = {429, 500, 502, 503, 504, 529}
+
+
+class HttpError(RuntimeError):
+    """HTTP エラー。原因が分かるように、応答の本文も含める。"""
+
+
+def _raise_for_status(resp) -> None:
+    if resp.status_code >= 400:
+        raise HttpError(f"{resp.status_code} {resp.reason} {resp.url} :: {resp.text[:400]}")
+
+
+def _is_quota_error(resp) -> bool:
+    """429 でも、残高不足などリトライしても直らないもの。"""
+    text = resp.text.lower()
+    return "insufficient_quota" in text or "billing" in text or "exceeded your current quota" in text
 
 
 def http_post(url: str, headers: Dict[str, str], body: Dict[str, Any], retries: int = 3, timeout: int = 60) -> Dict[str, Any]:
@@ -28,11 +43,11 @@ def http_post(url: str, headers: Dict[str, str], body: Dict[str, Any], retries: 
             if attempt == retries:
                 raise
         else:
-            if resp.status_code not in _RETRY_STATUS:
-                resp.raise_for_status()  # 4xx（422 の detail など）はそのまま例外にする
+            if resp.status_code not in _RETRY_STATUS or _is_quota_error(resp):
+                _raise_for_status(resp)  # 4xx（422 の detail など）や残高不足は、本文つきで例外にする
                 return resp.json()
             if attempt == retries:
-                resp.raise_for_status()
+                _raise_for_status(resp)
         time.sleep(2 ** attempt)
     raise RuntimeError("unreachable")
 
