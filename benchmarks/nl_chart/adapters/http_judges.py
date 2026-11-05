@@ -57,8 +57,9 @@ class _JudgeAdapter:
     url = ""
     key_env = ""
 
-    def __init__(self, model: str, post: Optional[Post] = None, api_key: Optional[str] = None):
+    def __init__(self, model: str, post: Optional[Post] = None, api_key: Optional[str] = None, with_fit: bool = False):
         self.model = model
+        self.with_fit = with_fit
         self._post = post or http_post
         self._api_key = api_key
         self._questions: Dict[Tuple[bool, Optional[int]], Any] = {}
@@ -70,7 +71,7 @@ class _JudgeAdapter:
     def questions(self, with_none: bool, seed: Optional[int]):
         k = (with_none, seed)
         if k not in self._questions:
-            self._questions[k] = c.build_questions(with_none=with_none, seed=seed)
+            self._questions[k] = c.build_questions(with_none=with_none, seed=seed, with_fit=self.with_fit)
         return self._questions[k]
 
     def build_request(self, row: Dict[str, Any], with_none: bool, seed: Optional[int]) -> Dict[str, Any]:

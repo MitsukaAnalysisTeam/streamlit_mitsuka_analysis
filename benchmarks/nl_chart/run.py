@@ -73,6 +73,7 @@ def run_one(adapter, row, with_none, seed, rep) -> Dict[str, Any]:
         "adapter": adapter.kind,
         "model": adapter.model,
         "with_none": with_none,
+        "with_fit": getattr(adapter, "with_fit", False),
         "shuffle_seed": seed,
         "repeat": rep,
         "ts": datetime.now().isoformat(timespec="seconds"),
@@ -104,11 +105,11 @@ def run_all(adapter, jobs, workers: int, out) -> Tuple[int, int]:
     return ok, failed
 
 
-def make_adapter(name: str, model: str, effort: Optional[str] = None):
+def make_adapter(name: str, model: str, effort: Optional[str] = None, with_fit: bool = False):
     cls = ADAPTERS[name]
     if name in LLM_ADAPTERS:
         return cls(model=model, **({"effort": effort} if effort else {}))
-    return cls(model)
+    return cls(model, with_fit=with_fit)
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -121,6 +122,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                     help="選択肢の順序。none=シャッフルなし、整数=その seed でシャッフル。複数指定で複数回（判断役のみ）")
     ap.add_argument("--with-none", choices=["yes", "no", "both"], default="no",
                     help="チャートの選択肢に「どれも当てはまらない」を足すか（判断役のみ）")
+    ap.add_argument("--with-fit", action="store_true",
+                    help="各グラフが質問に使えるかも聞く（判断役のみ。選んだグラフの値で誤りを検出する）")
     ap.add_argument("--effort", help="LLM の思考の量（openai / claude のみ。既定は low）")
     ap.add_argument("--repeat", type=int, default=1, help="同じリクエストを何回投げるか（再実行の一致を見る）")
     ap.add_argument("--workers", type=int, default=4)
@@ -133,7 +136,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     seeds = parse_seeds(args.shuffle_seeds) if is_judge else [None]
     with_nones = parse_with_none(args.with_none) if is_judge else [False]
     jobs = list(plan(rows, with_nones, seeds, args.repeat))
-    adapter = make_adapter(args.adapter, args.model, args.effort)
+    adapter = make_adapter(args.adapter, args.model, args.effort, args.with_fit and is_judge)
 
     first = jobs[0]
     body = adapter.build_request(first[0], first[1], first[2])

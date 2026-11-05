@@ -66,10 +66,15 @@ ANSWERABLE = "answerable"
 CHART = "chart"
 HIGHLIGHT = "highlight"
 ARG_PREFIX = "arg__"
+FIT_PREFIX = "fit__"
 
 
 def arg_question_name(chart_id: str, arg: str) -> str:
     return f"{ARG_PREFIX}{chart_id}__{arg}"
+
+
+def fit_question_name(chart_id: str) -> str:
+    return f"{FIT_PREFIX}{chart_id}"
 
 
 def build_state(question: str, previous_request: Optional[dict]) -> Dict[str, Any]:
@@ -77,11 +82,12 @@ def build_state(question: str, previous_request: Optional[dict]) -> Dict[str, An
     return {"question": question, "previous_request": previous_request}
 
 
-def build_questions(with_none: bool = False, seed: Optional[int] = None) -> List[Question]:
+def build_questions(with_none: bool = False, seed: Optional[int] = None, with_fit: bool = False) -> List[Question]:
     """判断役への質問一式を作る。全チャートの引数をまとめて聞き、選ばれたチャート分だけ使う。
 
     with_none: チャートの選択肢に「どれも当てはまらない」を足す（5.4 章の判定方式の比較用）。
     seed: 指定すると、選択肢の順序をシャッフルする（順序バイアスの確認用）。
+    with_fit: 各グラフについて「この質問にそのまま使えるか」も聞く（選んだグラフの値で、自信のある誤りを検出する）。
     """
     rng = random.Random(seed) if seed is not None else None
 
@@ -130,6 +136,17 @@ def build_questions(with_none: bool = False, seed: Optional[int] = None) -> List
                     f"{arg.description}を選ぶ。質問で指定されていなければ「{arg.default}」を選ぶ。"
                     "`previous_request` がある場合、省略された指定は直前の値を引き継ぐ。",
                     ordered(list(arg.options.items())),
+                )
+            )
+    if with_fit:
+        for chart in CHARTS:
+            questions.append(
+                Question(
+                    fit_question_name(chart.id),
+                    "predicate",
+                    "`question` に答えるために、次のグラフはそのまま使えるか。質問が求めている対象・指標・切り口が、"
+                    "グラフの説明と合っている場合だけ「はい」。説明にない対象（例: ラーメンのグラフで客数を聞かれた）や、"
+                    f"別の切り口しか見られない場合は「いいえ」。\nグラフ: {chart.description}",
                 )
             )
     return questions
@@ -233,6 +250,7 @@ class Prediction:
     arg_confs: Dict[str, float] = field(default_factory=dict)
     highlight_conf: Optional[float] = None
     chart_probs: Dict[str, float] = field(default_factory=dict)
+    fit: Optional[float] = None  # 選んだグラフが質問に使えるかの確率（with_fit のときだけ）
     # ---- 検証
     invalid: Optional[str] = None  # カタログに収まらない出力だったときの理由
     refused: bool = False  # 判断役・LLM が拒否の応答を返した
@@ -253,6 +271,9 @@ def assemble_judge_prediction(answers: Dict[str, NormAnswer]) -> Prediction:
     hl = answers[HIGHLIGHT]
     pred.highlight = hl.choice
     pred.highlight_conf = hl.confidence
+
+    fit = answers.get(fit_question_name(pred.chart_id))
+    pred.fit = fit.probability if fit is not None else None
 
     if pred.chart_id in CATALOG:
         for arg in CATALOG[pred.chart_id].args:
@@ -277,6 +298,7 @@ def route(
     t_llm: float = 0.5,
     t_run: float = 0.8,
     include_highlight: bool = True,
+    t_fit: Optional[float] = None,
 ) -> str:
     """設計書 7 章の振り分け。"reject" / "fallback"（LLM へ）/ "ask_back" / "run" を返す。"""
     if pred.refused:
@@ -285,6 +307,8 @@ def route(
         return "reject"
     if pred.chart_id == NONE_OF_THESE or pred.invalid:
         return "fallback"
+    if t_fit is not None and pred.fit is not None and pred.fit < t_fit:
+        return "fallback"  # 選んだグラフが質問に使えないと判断役自身が言っている
     confs = [pred.chart_conf, *pred.arg_confs.values()]
     if include_highlight:
         confs.append(pred.highlight_conf)

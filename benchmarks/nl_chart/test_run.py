@@ -169,6 +169,22 @@ def test_missing_key_stops_before_running():
         c.load_env = orig
 
 
+def test_with_fit_adds_questions_and_is_recorded():
+    seen = {}
+
+    def post(url, headers, body):
+        seen["n"] = len(body["questions"])
+        return _jev_response("daily_bar")
+
+    base = JevAdapter("jev-latest", post=post, api_key="k")
+    fit = JevAdapter("jev-latest", post=post, api_key="k", with_fit=True)
+    run.run_one(base, ROWS[0], False, None, 0)
+    n_base = seen["n"]
+    rec = run.run_one(fit, ROWS[0], False, None, 0)
+    assert seen["n"] == n_base + len(run.c.CHARTS)
+    assert rec["with_fit"] is True
+
+
 if __name__ == "__main__":
     tests = [(n, f) for n, f in sorted(globals().items()) if n.startswith("test_") and callable(f)]
     for name, fn in tests:

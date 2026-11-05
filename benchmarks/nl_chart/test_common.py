@@ -53,7 +53,7 @@ def _jev_choice(choice, conf, probs=None):
             "probabilities": probs or {choice: conf}}
 
 
-def _jev_response(chart_id, conf=0.9, answerable=0.95, highlight="none", arg_overrides=None):
+def _jev_response(chart_id, conf=0.9, answerable=0.95, highlight="none", arg_overrides=None, fit=None):
     answers = {
         c.ANSWERABLE: {"type": "noul", "noul": answerable},
         c.CHART: _jev_choice(chart_id, conf),
@@ -63,6 +63,9 @@ def _jev_response(chart_id, conf=0.9, answerable=0.95, highlight="none", arg_ove
         for a in ch.args:
             value = (arg_overrides or {}).get((ch.id, a.name), a.default)
             answers[c.arg_question_name(ch.id, a.name)] = _jev_choice(value, conf)
+    if fit is not None:  # 選んだグラフの fit だけ指定する。他のグラフは 0.5
+        for ch in c.CHARTS:
+            answers[c.fit_question_name(ch.id)] = {"type": "noul", "noul": fit if ch.id == chart_id else 0.5}
     return {"model": "jev-latest", "answers": answers, "usage": {"input_tokens": 1, "output_tokens": 0}}
 
 
@@ -110,6 +113,28 @@ def test_route_rules():
     # 強調だけが低い場合: 含めるなら聞き返し／LLM、外すなら実行
     assert c.route(pred(hl_conf=0.3)) == "fallback"
     assert c.route(pred(hl_conf=0.3), include_highlight=False) == "run"
+
+
+def test_fit_questions_and_routing():
+    base = c.build_questions()
+    fit = c.build_questions(with_fit=True)
+    assert len(fit) == len(base) + len(c.CHARTS)
+    assert [q.name for q in fit[len(base):]] == [c.fit_question_name(ch.id) for ch in c.CHARTS]
+    assert all(q.kind == "predicate" for q in fit[len(base):])
+    assert c.to_jev_request("jev-latest", c.build_state("x", None), fit)["questions"][c.fit_question_name("daily_bar")]["type"] == "noul"
+
+    def pred(fit_value):
+        return c.assemble_judge_prediction(c.parse_jev_response(_jev_response("daily_bar", fit=fit_value)))
+
+    assert pred(0.9).fit == 0.9
+    assert c.route(pred(0.1)) == "run"  # t_fit を指定しなければ、今までどおり
+    assert c.route(pred(0.1), t_fit=0.4) == "fallback"
+    assert c.route(pred(0.6), t_fit=0.4) == "run"
+    no_fit = c.assemble_judge_prediction(c.parse_jev_response(_jev_response("daily_bar")))
+    assert no_fit.fit is None and c.route(no_fit, t_fit=0.4) == "run"  # fit がなければ無視
+    # 答えられる確率が低ければ、fit より対応外が先
+    low = c.assemble_judge_prediction(c.parse_jev_response(_jev_response("daily_bar", answerable=0.05, fit=0.1)))
+    assert c.route(low, t_fit=0.4) == "reject"
 
 
 def test_none_of_these_goes_to_fallback():
