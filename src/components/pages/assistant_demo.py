@@ -92,7 +92,7 @@ def show():
         t_llm = st.slider("LLM に回す（最も低い自信がこれ未満）", 0.0, 1.0, 0.5, 0.05)
         t_run = st.slider("そのまま実行する（最も低い自信がこれ以上）", 0.0, 1.0, 0.8, 0.05)
         with_fit = st.checkbox("選んだグラフが質問に使えるかも Jev に確認する", value=True)
-        t_fit = st.slider("LLM に回す（使えるかの確率がこれ未満）", 0.0, 1.0, 0.4, 0.05, disabled=not with_fit)
+        t_fit = st.slider("LLM に回す（使えるかの確率がこれ未満）", 0.0, 1.0, 0.5, 0.05, disabled=not with_fit)
         show_reference = st.checkbox("実行以外でも、Jev の第一候補を描画してみる", value=True)
         st.checkbox("期間を手動で指定する（質問からの読み取りを使わない）", key="assistant_manual_period")
         if st.session_state.get("assistant_manual_period"):
