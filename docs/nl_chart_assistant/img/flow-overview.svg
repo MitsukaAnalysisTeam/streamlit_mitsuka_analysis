@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 460" width="1280" height="460" font-family="Hiragino Sans, Noto Sans JP, Yu Gothic, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#555"/>
+    </marker>
+  </defs>
+  <rect width="1280" height="460" fill="#ffffff"/>
+
+  <!-- 質問文 -->
+  <rect x="20" y="135" width="120" height="70" rx="35" fill="#f1f1f1" stroke="#888" stroke-width="2"/>
+  <text x="80" y="177" font-size="22" text-anchor="middle" fill="#222">質問文</text>
+
+  <!-- ① 期間を解釈 (コード) -->
+  <rect x="180" y="135" width="170" height="70" rx="10" fill="#dbe8fb" stroke="#4a7fd4" stroke-width="2"/>
+  <text x="265" y="168" font-size="20" text-anchor="middle" fill="#222">① 期間を解釈</text>
+  <text x="265" y="192" font-size="14" text-anchor="middle" fill="#444">先月 → 2026年9月</text>
+
+  <!-- ② Jev -->
+  <rect x="390" y="125" width="230" height="90" rx="10" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="3"/>
+  <text x="505" y="160" font-size="20" font-weight="bold" text-anchor="middle" fill="#222">② Jev が並列で判断</text>
+  <text x="505" y="184" font-size="14" text-anchor="middle" fill="#444">答えられる? グラフ? 引数? 強調?</text>
+  <text x="505" y="203" font-size="14" text-anchor="middle" fill="#444">それぞれ確率(confidence)つき</text>
+
+  <!-- ③ 振り分け (コード) -->
+  <polygon points="740,105 840,170 740,235 640,170" fill="#dbe8fb" stroke="#4a7fd4" stroke-width="2"/>
+  <text x="740" y="166" font-size="20" text-anchor="middle" fill="#222">③ 振り分け</text>
+  <text x="740" y="190" font-size="14" text-anchor="middle" fill="#444">confidence を見る</text>
+
+  <!-- ④ データ取得 (コード) -->
+  <rect x="900" y="135" width="180" height="70" rx="10" fill="#dbe8fb" stroke="#4a7fd4" stroke-width="2"/>
+  <text x="990" y="168" font-size="20" text-anchor="middle" fill="#222">④ データ取得</text>
+  <text x="990" y="192" font-size="14" text-anchor="middle" fill="#444">強調候補を算出</text>
+
+  <!-- ⑤ 描画 -->
+  <rect x="1120" y="135" width="140" height="70" rx="10" fill="#dbe8fb" stroke="#4a7fd4" stroke-width="2"/>
+  <text x="1190" y="168" font-size="20" text-anchor="middle" fill="#222">⑤ 描画</text>
+  <text x="1190" y="192" font-size="14" text-anchor="middle" fill="#444">強調つき</text>
+
+  <!-- 横の矢印 -->
+  <line x1="140" y1="170" x2="178" y2="170" stroke="#555" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="350" y1="170" x2="388" y2="170" stroke="#555" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="620" y1="170" x2="638" y2="170" stroke="#555" stroke-width="2.5" marker-end="url(#a)"/>
+  <line x1="840" y1="170" x2="898" y2="170" stroke="#3a9b5c" stroke-width="4" marker-end="url(#a)"/>
+  <text x="869" y="156" font-size="15" font-weight="bold" text-anchor="middle" fill="#2a7a45">高</text>
+  <text x="869" y="198" font-size="13" text-anchor="middle" fill="#2a7a45">実行</text>
+  <line x1="1080" y1="170" x2="1118" y2="170" stroke="#555" stroke-width="2.5" marker-end="url(#a)"/>
+
+  <!-- 上: 聞き返す / 対応外 (Jev のみ) -->
+  <line x1="740" y1="105" x2="740" y2="82" stroke="#3a9b5c" stroke-width="3" marker-end="url(#a)"/>
+  <rect x="580" y="20" width="320" height="60" rx="10" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="2"/>
+  <text x="740" y="46" font-size="18" text-anchor="middle" fill="#222">聞き返す / 対応外と返す</text>
+  <text x="740" y="68" font-size="13" text-anchor="middle" fill="#444">Jev の判断だけで完結(LLM は呼ばない)</text>
+  <text x="765" y="98" font-size="13" text-anchor="start" fill="#2a7a45">中・答えられない</text>
+
+  <!-- 下: LLM (自信がないときだけ) -->
+  <line x1="740" y1="235" x2="740" y2="298" stroke="#e08a1e" stroke-width="3" stroke-dasharray="8 5" marker-end="url(#a)"/>
+  <text x="755" y="272" font-size="14" font-weight="bold" fill="#b86a0a">低(自信がない)</text>
+  <rect x="610" y="300" width="260" height="90" rx="10" fill="#fde5c8" stroke="#e08a1e" stroke-width="3" stroke-dasharray="8 5"/>
+  <text x="740" y="334" font-size="20" font-weight="bold" text-anchor="middle" fill="#222">LLM が代わりに判断</text>
+  <text x="740" y="358" font-size="14" text-anchor="middle" fill="#444">GPT-6 Luna(ツールコーリング)</text>
+  <text x="740" y="377" font-size="13" text-anchor="middle" fill="#444">自信がないときだけ使う</text>
+  <polyline points="870,345 990,345 990,207" fill="none" stroke="#e08a1e" stroke-width="3" stroke-dasharray="8 5" marker-end="url(#a)"/>
+  <text x="1000" y="300" font-size="13" fill="#b86a0a">カタログで検証OK</text>
+  <text x="1000" y="318" font-size="13" fill="#b86a0a">→ 実行</text>
+
+  <!-- 凡例 -->
+  <rect x="20" y="410" width="22" height="22" rx="4" fill="#dbe8fb" stroke="#4a7fd4" stroke-width="2"/>
+  <text x="50" y="427" font-size="16" fill="#222">コード(期間・集計・描画・振り分け)</text>
+  <rect x="380" y="410" width="22" height="22" rx="4" fill="#d9f2e0" stroke="#3a9b5c" stroke-width="2"/>
+  <text x="410" y="427" font-size="16" fill="#222">Jev(主役: ほとんどの質問はここで完結)</text>
+  <rect x="800" y="410" width="22" height="22" rx="4" fill="#fde5c8" stroke="#e08a1e" stroke-width="2" stroke-dasharray="4 3"/>
+  <text x="830" y="427" font-size="16" fill="#222">LLM(自信がないときだけ)</text>
+</svg>
